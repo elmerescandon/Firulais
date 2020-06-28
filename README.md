@@ -1,5 +1,5 @@
-# Firulais <h1> tag
-	__Robot cuadrúpedo de 12 GDL__
+# Firulais 
+	*Robot cuadrúpedo de 12 GDL*
 
 Integrantes: 
 * Axel Céspedes
