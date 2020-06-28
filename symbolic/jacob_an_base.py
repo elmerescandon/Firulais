@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
+import numpy as np 
+import sympy as sp 
+import sympy.matrices as Matrix
 from funciones import *
-import sympy as sp
-from sympy.matrices import Matrix
 
-sp.init_printing()
+
 q11, q12, q13 = sp.symbols("q11 q12 q13")
 q21, q22, q23 = sp.symbols("q21 q22 q23")
 q31, q32, q33 = sp.symbols("q31 q32 q33")
@@ -55,10 +56,28 @@ T4_03 = sp.simplify(T4_01*T4_12*T4_23)
 T4_B0 = sTroty(-sp.pi/2)*sTrasl(0,-d1,0)
 T4_B3 = sp.simplify(T4_B0*T4_03)
 
-# Imprimir los valores 
+# Jacobiano analitico
+sp.init_printing()
+#Posicion de la matriz de la Matriz de Transformacion
+D1 =T1_B3[0:3,3]
+D2 =T2_B3[0:3,3]
+D3 =T3_B3[0:3,3]
+D4 =T4_B3[0:3,3]
 
-# print("Pata 1:"); sp.pprint(T1_03);
-# print("Pata 2:"); sp.pprint(T2_03);
-# print("Pata 3:"); sp.pprint(T3_03);
-# print("Pata 4:"); sp.pprint(T4_03);
+#Orientacion de la Matriz de Transformacion en cuaterniones
+P1 =  sp.simplify(simquaterion(T1_B3[0:3,0:3]))
+P2 =  sp.simplify(simquaterion(T2_B3[0:3,0:3]))
+P3 =  sp.simplify(simquaterion(T3_B3[0:3,0:3]))
+P4 =  sp.simplify(simquaterion(T4_B3[0:3,0:3]))
+
+J1 = sp.simplify(sp.Matrix.vstack(T1_B3[0:3,3],P1).jacobian(sp.Matrix([q11, q12, q13])))
+J2 = sp.simplify(sp.Matrix.vstack(T2_B3[0:3,3],P2).jacobian(sp.Matrix([q21, q22, q23])))
+J3 = sp.simplify(sp.Matrix.vstack(T3_B3[0:3,3],P3).jacobian(sp.Matrix([q31, q32, q33])))
+J4 = sp.simplify(sp.Matrix.vstack(T4_B3[0:3,3],P4).jacobian(sp.Matrix([q41, q42, q43])))
+
+
+print("Jacobiano analitico de la Pata 1:"); sp.pprint(J1)
+print("Jacobiano analitico de la Pata 2:"); sp.pprint(J2)
+print("Jacobiano analitico de la P4ata 3:"); sp.pprint(J3)
+print("Jacobiano analitico de la Pata 4:"); sp.pprint(J4)
 
