@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 
-  <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find freebase-example)/urdf/sample-quadruped2.xacro'" />
+  <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find freebase-example)/urdf/sample-quadruped.xacro'" />
   <param name="reference_frame" value="map"/>
 
   <arg name="frame" value="map"/>
