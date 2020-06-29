@@ -1,6 +1,6 @@
 # -- coding: utf-8 --
-import numpy as np 
-import sympy as sp 
+import numpy as np
+import sympy as sp
 import sympy.matrices as Matrix
 from funciones import *
 
@@ -15,13 +15,13 @@ TT_IB = sTrasl(pb_x,pb_y,pb_z)
 quater_B = Matrix([[wb],[eb_x],[eb_y],[eb_z]])
 
 # Rotación del sistema inercial al base (Transformación)
-R_IB = symrquater(quater_B) 
+R_IB = symrquater(quater_B)
 
 # Rotación del sistema inercial al base
-TR_IB = symtransmaxtrix(R_IB) 
+TR_IB = symtransmaxtrix(R_IB)
 
 # Transformada homogénea de la base con respecto al sistema inercial
-T_IB = TT_IB*TR_IB 
+T_IB = TT_IB*TR_IB
 TQ = 2*Matrix([[-eb_x,wb,-eb_z,eb_y],
                [-eb_y,eb_z,wb,-eb_x],
                [-eb_z,-eb_y,eb_x,wb]])
