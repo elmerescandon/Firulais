@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>freebase-example</name>
+  <name>ros_ksimulation</name>
   <version>0.0.1</version>
   <description>
 
@@ -9,7 +9,7 @@
 
   </description>
 
-  <maintainer email="oramos@utec.edu.pe">oramos</maintainer>
+  <maintainer email="axel.cespedes@utec.edu.pe">acespedes</maintainer>
   <license>TODO</license>
 
   <buildtool_depend>catkin</buildtool_depend>

@@ -43,12 +43,13 @@ def publish_floor():
    marker.pose.orientation.w = 1.0
    marker.pose.position.x = 0.0
    marker.pose.position.y = 0.0
-   marker.pose.position.z = -size[2]/2.0
+   marker.pose.position.z = -size[2] / 2.0
 
    r = rospy.Rate(1)
    while not rospy.is_shutdown():
       publisher.publish(marker)
       r.sleep()
+
 
 if __name__ == '__main__':
    try:
