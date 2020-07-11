@@ -1,8 +1,0 @@
-prefix=/home/raul/firulaisv1_ws/install
-
-Name: robot_firulais
-Description: Description of robot_firulais
-Version: 0.0.0
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: 
