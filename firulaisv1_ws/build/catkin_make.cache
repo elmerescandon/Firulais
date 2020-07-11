@@ -1,0 +1,2 @@
+robot_firulais
+-DCATKIN_DEVEL_PREFIX=/home/raul/firulaisv1_ws/devel -DCMAKE_INSTALL_PREFIX=/home/raul/firulaisv1_ws/install -G Unix Makefiles

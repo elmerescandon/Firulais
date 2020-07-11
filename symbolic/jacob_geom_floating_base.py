@@ -51,4 +51,4 @@ Jb_base = Matrix([[eye,vel_jb],
 Jg_1 = Matrix.vstack(R_IB*JB_1[0:3,0:3],R_IB*JB_1[3:6,0:3])
 Jg_1 = sp.simplify(Matrix.hstack(Jb_base,Jg_1))
 
-sp.pprint(Jg_1)
+print()

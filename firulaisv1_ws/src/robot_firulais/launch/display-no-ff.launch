@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- No hay frame map -->
+  <!--  No considera el como child_frame el base link -->
+  <!-- No hay robot pose publisher -->
+  <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find robot_firulais)/urdf/firulais_model.xacro'" />
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+  <arg name="gui" default="False" />
+  <param name="use_gui" value="$(arg gui)"/>
+  
+  <arg name="config_file" value="$(find robot_firulais)/config/firulais.rviz"/>
+  <node name="rviz" pkg="rviz" type="rviz" respawn="false" output="screen" args="-d $(arg config_file)"/>
+
+  <!-- No hay floor publisher -->
+  
+</launch>

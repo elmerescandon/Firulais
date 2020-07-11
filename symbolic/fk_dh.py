@@ -56,9 +56,9 @@ T4_B0 = sTroty(-sp.pi/2)*sTrasl(0,-d1,0)
 T4_B3 = sp.simplify(T4_B0*T4_03)
 
 # Imprimir los valores 
-
 # print("Pata 1:"); sp.pprint(T1_03);
 # print("Pata 2:"); sp.pprint(T2_03);
 # print("Pata 3:"); sp.pprint(T3_03);
 # print("Pata 4:"); sp.pprint(T4_03);
 
+print(T1_B3)

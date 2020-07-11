@@ -1,0 +1,82 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+
+import rospy
+from sensor_msgs.msg import JointState
+from funciones import *
+from markers import *
+
+# Joint names
+jnames = ["front_right_j1", "front_right_j2", "front_right_j3",
+          "front_left_j1", "front_left_j2", "front_left_j3",
+          "rear_right_j1", "rear_right_j2", "rear_right_j3",
+          "rear_left_j1", "rear_left_j2", "rear_left_j3"]
+
+# Inicializar vector
+q0 = np.deg2rad(np.array([0,0,0,
+			   			  0,0,0,
+			   			  0,0,0,
+			   			  0,0,0]))
+
+# Pata 1: Superior Izquierda (q1)
+q1 = q0[3:6]
+
+# Pata 2: Inferior Izquierda (q2)
+q2 = q0[9:12]
+
+# Pata 3: Superior Derecha (q3)
+q3 = q0[0:3]
+
+# Pata 4: Inferior Derecha (q4)
+q4 = q0[6:9]
+
+# Ball markers
+bmarker1 = BallMarker(color['RED'])
+bmarker2 = BallMarker(color['BLUE'])
+bmarker3 = BallMarker(color['GREEN'])
+bmarker4 = BallMarker(color['YELLOW'])
+
+# Creación de nodo
+rospy.init_node('joints_test')
+
+# Publicar al tópico de articulaciones
+pub = rospy.Publisher('/joint_states',JointState,queue_size=10)
+
+# Creación del mensaje a enviar 
+articulaciones = JointState()
+articulaciones.name = jnames 
+articulaciones.position = q0
+
+rate = rospy.Rate(10)
+
+
+q2 = np.array([0,0,0])
+while not rospy.is_shutdown():
+	articulaciones.header.stamp = rospy.Time.now()
+	q0 = q0 + 0.1 
+	articulaciones.position = q0
+	pub.publish(articulaciones)
+	# Pata 1: Superior Izquierda (q1)
+	q1 = q0[3:6]
+
+	# Pata 2: Inferior Izquierda (q2)
+	q2 = q0[9:12]
+
+	# Pata 3: Superior Derecha (q3)
+	q3 = q0[0:3]
+
+	# Pata 4: Inferior Derecha (q4)
+	q4 = q0[6:9]
+
+	xfl = fk_pata1_pos(q1)
+	xrl = fk_pata2_pos(q2)
+	xfr = fk_pata3_pos(q3)
+	xrr = fk_pata4_pos(q4)
+	
+	bmarker1.position(xfl)
+	bmarker2.position(xfr)
+	bmarker3.position(xrr)
+	bmarker4.position(xrl)
+
+	rate.sleep()
