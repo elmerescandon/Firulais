@@ -2,12 +2,8 @@ import numpy as np
 from funciones import *
 
 
-ang = np.linspace(0,6*np.pi,300)
-temp = np.mod(ang,2*np.pi)
-radio = 0.10 
-z = radio*np.sin(temp)
-x = radio*np.cos(temp)
-print(x)
+q = np.array([3,-0.5,0])
 
-
+g = jacobian_a_pose(q,4,delta=0.0001)
+print(g)
 	

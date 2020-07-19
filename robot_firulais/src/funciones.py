@@ -33,10 +33,7 @@ def rot2quaternion(R):
     ex = (1/(4*omega))*(R[2, 1]-R[1, 2])
     ey = (1/(4*omega))*(R[0, 2]-R[2, 0])
     ez = (1/(4*omega))*(R[1, 0]-R[0, 1])
-    q = np.array([[omega],
-                  [ex],
-                  [ey],
-                  [ez]])
+    q = np.array([omega,ex,ey,ez])
     return q
 
 def sTrasl(x, y, z):
@@ -86,6 +83,37 @@ def crossproduct(a, b):
                   [a[0]*b[1] - a[1]*b[0]]])
     return x
 
+def quaternionMult(q1, q2):
+
+    qout = np.zeros(4)
+    qout[0] = -q1[1] * q2[1] - q1[2] * q2[2] - q1[3] * q2[3] + q1[0] * q2[0]
+    qout[1] = q1[0] * q2[1] - q1[3] * q2[2] + q1[2] * q2[3] + q1[1] * q2[0]
+    qout[2] = q1[3] * q2[1] + q1[0] * q2[2] - q1[1] * q2[3] + q1[2] * q2[0]
+    qout[3] = -q1[2] * q2[1] + q1[1] * q2[2] + q1[0] * q2[3] + q1[3] * q2[0]
+    return qout
+
+def error_quater(qact, qd):
+    print(qd);print(qact)
+    # Conversión a vector columna
+    eps_act = np.array([[qact[1]],[qact[2]],[qact[3]]])
+    eps_d = np.array([[qd[1]],[qd[2]],[qd[3]]])
+    # Obtención de ew_act y ew_des 
+    ew_act = qact[0]
+    ew_d = qd[0]
+    # Error de quaterniones
+    ew_err = ew_d*ew_act + (eps_d.transpose()).dot(eps_act) 
+    cross = crossproduct(eps_d,eps_act) 
+    cross = np.array([cross[0,0],cross[1,0],cross[2,0]])
+    eps_err= -ew_d*eps_act + ew_act*eps_d - cross
+    quater_err = np.array([ew_err,[eps_err[0,0]],[eps_err[1,0]],[eps_err[2,0]]])
+    return quater_err
+
+def error_quaterv2(qact, qd):
+    # Conversión a vector columna
+    qact = np.array([qact[0],-qact[1],-qact[2],-qact[3]])
+    quater_err =  quaternionMult(qd,qact)
+    return np.array([[quater_err[0]],[quater_err[1]],[quater_err[2]],[quater_err[3]]])
+
 
 # =================================
 #  Funciones Cinemática Directa
@@ -94,18 +122,25 @@ def crossproduct(a, b):
 # Cinemática directa de cada pata considerando
 # únicamente la posición 
 
-def fk_pata1_pos(q):
-	# Pata 1
-	l1 = 0.125;l2=0.025;l3=0.105;l4=0.104;d1=0.075
-	#l1 = 125;l2 = 25;l3 = 103;l4 = 104;d1 = 75
-	q11 = q[0];q12 = q[1];q13 = q[2];
-	T1_01 = sdh(l1, q11, 0, np.pi/2)
-	T1_12 = sdh(l2, q12, -l3, 0)
-	T1_23 = sdh(0, q13, -l4, 0)
-	T1_03 = T1_01.dot(T1_12).dot(T1_23)
-	T1_B0 = sTroty(-np.pi/2).dot(sTrotx(np.pi)).dot(sTrasl(0,-d1,0))
-	T1_B3 = T1_B0.dot(T1_03)
-	return T1_B3
+def fk_pata1_pos(q, modo=''):
+    # Pata 1
+    l1 = 0.125;l2=0.025;l3=0.105;l4=0.104;d1=0.075
+    #l1 = 125;l2 = 25;l3 = 103;l4 = 104;d1 = 75
+    q11 = q[0];q12 = q[1];q13 = q[2];
+    T1_01 = sdh(l1, q11, 0, np.pi/2)
+    T1_12 = sdh(l2, q12, -l3, 0)
+    T1_23 = sdh(0, q13, -l4, 0)
+    T1_03 = T1_01.dot(T1_12).dot(T1_23)
+    T1_B0 = sTroty(-np.pi/2).dot(sTrotx(np.pi)).dot(sTrasl(0,-d1,0))
+    T1_B3 = T1_B0.dot(T1_03)
+
+    if modo == 'pose':
+        quater = rot2quaternion(T1_B3[0:3,0:3])
+        position = T1_B3[0:3,3] 
+        pose = np.hstack((position,quater))
+        return pose
+    else:
+        return T1_B3
 
 
 def fk_pata2_pos(q):
@@ -147,9 +182,9 @@ def fk_pata4_pos(q):
 	T4_B3 = T4_B0.dot(T4_03)
 	return T4_B3
 
-def fk_pata_pos(q,pata):
+def fk_pata_pos(q,pata,modo=''):
     if pata == 1:
-    	T = fk_pata1_pos(q)
+    	T = fk_pata1_pos(q,modo)
     elif pata == 2: 
     	T = fk_pata2_pos(q)
     elif pata == 3: 
@@ -279,7 +314,7 @@ def jacob_a_pos(q,pata,delta=0.0001):
     # Crear una matriz 3x3
     J = np.zeros((3,3))
     # Transformacion homogenea inicial (usando q)
-    T = fk_pata_pos(q,pata)
+    T = fk_pata_pos(q,  pata)
     # Iteracion para la derivada de cada columna
     for i in xrange(3):
         # Copiar la configuracion articular inicial
@@ -290,4 +325,54 @@ def jacob_a_pos(q,pata,delta=0.0001):
         dT=fk_pata_pos(dq,pata)
         # Aproximacion del Jacobiano de posicion usando diferencias finitas
         J[:,[i]]=(dT[:3,[3]]-T[:3,[3]])/delta
+    return J
+
+def jacobian_a_pose(q,pata,delta=0.0001):
+    """
+    Jacobiano analitico para la posicion y orientacion (usando un
+    cuaternion). Retorna una matriz de 7x6 y toma como entrada el vector de
+    configuracion articular q=[q1, q2, q3, q4, q5, q6]
+
+    """
+    # Crear una matriz 3x6
+    JT = np.zeros((3,7))
+    # Transformacion homogenea inicial (usando q)
+    T=fk_pata_pos(q,pata)
+    quater = rot2quaternion(T[0:3,0:3])
+    position = T[0:3,3] # Posición en el espacio cartesiano
+    # Pose tiene la forma = x,y,z,ew,ex,ey,ez
+    pose = np.hstack((position,quater))
+    # Iteracion para la derivada de cada columna
+    for i in xrange(3):
+        # Copiar la configuracion articular inicial
+        dq = copy(q)
+        # Incrementar la articulacion i-esima usando un delta
+        dq[i]=dq[i]+delta#incremento de delta en la artic. i 
+        # Transformacion homogenea luego del incremento (q+delta)
+        dT=fk_pata_pos(dq,pata)
+        dquater = rot2quaternion(dT[0:3,0:3])
+        dposition = dT[0:3,3] # Posición en el espacio cartesiano
+        # Pose tiene la forma = x,y,z,ew,ex,ey,ez
+        dpose = np.hstack((dposition,dquater))
+        # Aproximacion del Jacobiano de posicion usando diferencias finitas
+        JT[[i],:]=(dpose-pose)/delta#se va ajustando artic. por artic.
+        J = JT.T
+    return J
+
+def jacobian_a_posev2(q, pata, delta=0.0001):
+    """
+    Jacobiano analitico para la posicion y orientacion (usando un
+    cuaternion). Retorna una matriz de 7x6 y toma como entrada el vector de
+    configuracion articular q=[q1, q2, q3, q4, q5, q6]
+
+    """
+    #J = np.zeros((7,6))
+    # Transformacion homogenea inicial (usando q)
+    q1 = q[0];q2=q[1];q3=q[2];
+
+    # Implementar este Jacobiano aqui
+    JT = 1/delta*np.array([fk_pata_pos(np.array([q1+delta,q2,q3]),pata,'pose')-fk_pata_pos(q,pata,'pose'),
+                  fk_pata_pos(np.array([q1,q2+delta,q3]),pata,'pose')-fk_pata_pos(q,pata,'pose'),
+                  fk_pata_pos(np.array([q1,q2,q3+delta]),pata,'pose')-fk_pata_pos(q,pata,'pose')])
+    J = JT.transpose()
     return J

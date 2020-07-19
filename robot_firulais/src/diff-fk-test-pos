@@ -5,7 +5,6 @@
 import rospy
 from sensor_msgs.msg import JointState
 from funciones import *
-from markers import *
 
 # Joint names
 jnames = ["front_right_j1", "front_right_j2", "front_right_j3",
@@ -13,28 +12,20 @@ jnames = ["front_right_j1", "front_right_j2", "front_right_j3",
           "rear_right_j1", "rear_right_j2", "rear_right_j3",
           "rear_left_j1", "rear_left_j2", "rear_left_j3"]
 
-# Posición deseada
-pata =  1
-qd = np.deg2rad(np.array([0,0,0]))
-Td=fk_pata_pos(qd,pata)
-quaterd = rot2quaternion(Td[0:3,0:3])
-positiond = Td[0:3,3] # Posición en el espacio cartesiano
-# Pose tiene la forma = x,y,z,ew,ex,ey,ez
-xd = np.hstack((positiond,quaterd))
-
+# Posición deseada 
+qd = np.deg2rad(np.array([30,0,0]))
+Td = fk_pata1_pos(qd)
+xd = Td[0:3,3]
 # Inicializar vector
 q0 = np.deg2rad(np.array([0,0,0,
-			   			  30,0,90,
+			   			  30,90,40,
 			   			  50,0,0,
 			   			  0,0,0]))
 
 # Pata 1: Superior Izquierda (q1) y posición actual
 q1 = q0[3:6]
-T=fk_pata_pos(q1,pata)
-quater = rot2quaternion(T[0:3,0:3])
-position = T[0:3,3] # Posición en el espacio cartesiano
-x = np.hstack((position,quater))
-
+T = fk_pata1_pos(q1)
+x = T[0:3,3]
 
 # Pata 2: Inferior Izquierda (q2)
 q2 = q0[9:12]
@@ -45,11 +36,9 @@ q3 = q0[0:3]
 # Pata 4: Inferior Derecha (q4)
 q4 = q0[6:9]
 
-# Ball markers
-bmarker1 = BallMarker(color['RED'])
 
 # Creación de nodo
-rospy.init_node('diff_fk_joints_pos_test')
+rospy.init_node('joints_test')
 
 # Publicar al tópico de articulaciones
 pub = rospy.Publisher('/joint_states',JointState,queue_size=10)
@@ -63,8 +52,7 @@ freq = 20
 dt = 1.0/freq
 rate = rospy.Rate(freq)
 counter_xd = 0 
-print(dt)
-q_dot_vect = np.array([0,0,0])
+
 
 while not rospy.is_shutdown():
 	articulaciones.header.stamp = rospy.Time.now()
@@ -74,34 +62,29 @@ while not rospy.is_shutdown():
 	q1 = q0[3:6]
 
 	# Kinematic control law for the pose (complete here)
-	k = 1# Ganancia proporcional
+	k = 0.4# Ganancia proporcional
+	k_a = 0.005
 	# --------------------------------------------------
 	# Error por la posición
-	ep = xd[0:3] - x[0:3] 
-	Qe = error_quaterv2(x[3:7], xd[3:7])
-	e0 = np.array([[Qe[0,0]-1],
-	       [Qe[1,0]],
-	       [Qe[2,0]],
-	       [Qe[3,0]]])
-	e = np.array([[ep[0]],[ep[1]],[ep[2]],[e0[0,0]],[e0[1,0]],[e0[2,0]],[e0[3,0]]]) 	
-	# print(e)
-	e_dot = k*e
-	J = jacobian_a_posev2(q1,1)
-	velocity = J.dot(q_dot_vect)
-	velocity = velocity[0:3]
+	ep = x - xd
+	e = np.array([[ep[0]],[ep[1]],[ep[2]]]) 
+	e_dot = -k*e
+	# J = jacob_a_pos(q1,1)
+	J = jacob_g(q1,1)
+	J = J[0:3,0:3]
 	try: 
-		J_mul = np.linalg.inv(J.T.dot(J)).dot(J.T)
+	    J_mul = (J.transpose()).dot(np.linalg.inv(J.dot(J.transpose())))
 	except np.linalg.LinAlgError:
-		J_mul = (J.T).dot(np.linalg.inv(J.dot(J.transpose()) + (k_a)*np.eye(7))).dot(velocity)
+		print("Matriz no completa")
+		J_mul = (J.transpose()).dot(np.linalg.inv(J.dot(J.transpose()) + k_a*np.eye(3)))
+
 	q_dot = J_mul.dot(e_dot)
 	q_dot_vect = np.array([q_dot[0,0],q_dot[1,0],q_dot[2,0]])
-	# print(q_dot)
 	q1 =  q1 + dt*q_dot_vect
 	# Current configuration trnaformation to current position
-	T = fk_pata_pos(q1,pata)
-	quater = rot2quaternion(T[0:3,0:3])
-	position = T[0:3,3] # Posición en el espacio cartesiano
-	x = np.hstack((position,quater))
+	T = fk_pata1_pos(q1)
+	x = T[0:3,3]
 	q0[3:6] = q1
-	bmarker1.position(Td)
+
+
 	rate.sleep()
