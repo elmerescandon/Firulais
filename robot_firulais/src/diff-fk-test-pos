@@ -5,6 +5,7 @@
 import rospy
 from sensor_msgs.msg import JointState
 from funciones import *
+from markers import *
 
 # Joint names
 jnames = ["front_right_j1", "front_right_j2", "front_right_j3",
@@ -13,13 +14,13 @@ jnames = ["front_right_j1", "front_right_j2", "front_right_j3",
           "rear_left_j1", "rear_left_j2", "rear_left_j3"]
 
 # Posición deseada 
-qd = np.deg2rad(np.array([30,0,0]))
+qd = np.deg2rad(np.array([0,0,0]))
 Td = fk_pata1_pos(qd)
 xd = Td[0:3,3]
 # Inicializar vector
 q0 = np.deg2rad(np.array([0,0,0,
-			   			  30,90,40,
-			   			  50,0,0,
+			   			  0,0,0,
+			   			  0,0,0,
 			   			  0,0,0]))
 
 # Pata 1: Superior Izquierda (q1) y posición actual
@@ -35,6 +36,9 @@ q3 = q0[0:3]
 	
 # Pata 4: Inferior Derecha (q4)
 q4 = q0[6:9]
+
+# Ball markers
+bmarker1 = BallMarker(color['RED'])
 
 
 # Creación de nodo
@@ -73,7 +77,7 @@ while not rospy.is_shutdown():
 	J = jacob_g(q1,1)
 	J = J[0:3,0:3]
 	try: 
-	    J_mul = (J.transpose()).dot(np.linalg.inv(J.dot(J.transpose())))
+	    J_mul = np.linalg.inv(J.T.dot(J)).dot(J)
 	except np.linalg.LinAlgError:
 		print("Matriz no completa")
 		J_mul = (J.transpose()).dot(np.linalg.inv(J.dot(J.transpose()) + k_a*np.eye(3)))
@@ -85,6 +89,5 @@ while not rospy.is_shutdown():
 	T = fk_pata1_pos(q1)
 	x = T[0:3,3]
 	q0[3:6] = q1
-
-
+	bmarker1.position(Td)
 	rate.sleep()

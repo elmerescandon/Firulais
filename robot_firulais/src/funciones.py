@@ -133,7 +133,6 @@ def fk_pata1_pos(q, modo=''):
     T1_03 = T1_01.dot(T1_12).dot(T1_23)
     T1_B0 = sTroty(-np.pi/2).dot(sTrotx(np.pi)).dot(sTrasl(0,-d1,0))
     T1_B3 = T1_B0.dot(T1_03)
-
     if modo == 'pose':
         quater = rot2quaternion(T1_B3[0:3,0:3])
         position = T1_B3[0:3,3] 
@@ -143,54 +142,73 @@ def fk_pata1_pos(q, modo=''):
         return T1_B3
 
 
-def fk_pata2_pos(q):
-	# Pata 2
-	l1 = 0.125;l2=0.025;l3=0.105;l4=0.104;d1=0.075
-	#l1 = 125;l2 = 25;l3 = 103;l4 = 104;d1 = 75
-	q21 = q[0];q22 = q[1];q23 = q[2];
-	T2_01 = sdh(l1, np.pi+q21, 0, np.pi/2)
-	T2_12 = sdh(l2, q22, l3, 0)
-	T2_23 = sdh(0, q23, l4, 0)
-	T2_03 = (T2_01.dot(T2_12)).dot(T2_23)
-	T2_B0 = sTroty(-np.pi/2).dot(sTrasl(0,d1,0))
-	T2_B3 = T2_B0.dot(T2_03)
-	return T2_B3
+def fk_pata2_pos(q, modo=''):
+    # Pata 2
+    l1 = 0.125;l2=0.025;l3=0.105;l4=0.104;d1=0.075
+    #l1 = 125;l2 = 25;l3 = 103;l4 = 104;d1 = 75
+    q21 = q[0];q22 = q[1];q23 = q[2];
+    T2_01 = sdh(l1, np.pi+q21, 0, np.pi/2)
+    T2_12 = sdh(l2, q22, l3, 0)
+    T2_23 = sdh(0, q23, l4, 0)
+    T2_03 = (T2_01.dot(T2_12)).dot(T2_23)
+    T2_B0 = sTroty(-np.pi/2).dot(sTrasl(0,d1,0))
+    T2_B3 = T2_B0.dot(T2_03)
+    # Print
+    if modo=='pose':
+        quater = rot2quaternion(T2_B3[0:3,0:3])
+        position = T2_B3[0:3,3] 
+        pose = np.hstack((position,quater))
+        return pose
+    else:
+        return T2_B3
 
-def fk_pata3_pos(q):
-	# Pata 3
-	l1 = 0.125;l2=0.025;l3=0.105;l4=0.104;d1=0.075
-	#l1 = 125;l2 = 25;l3 = 103;l4 = 104;d1 = 75
-	q31 = q[0];q32 = q[1];q33 = q[2];
-	T3_01 = sdh(l1, np.pi+q31, 0, np.pi/2)
-	T3_12 = sdh(l2, q32, l3, 0)
-	T3_23 = sdh(0, q33, l4, 0)
-	T3_03 = T3_01.dot(T3_12).dot(T3_23)
-	T3_B0 = sTroty(-np.pi/2).dot(sTrotx(np.pi)).dot(sTrasl(0,d1,0))
-	T3_B3 = T3_B0.dot(T3_03)
-	return T3_B3 
+def fk_pata3_pos(q, modo=''):
+    # Pata 3
+    l1 = 0.125;l2=0.025;l3=0.105;l4=0.104;d1=0.075
+    #l1 = 125;l2 = 25;l3 = 103;l4 = 104;d1 = 75
+    q31 = q[0];q32 = q[1];q33 = q[2];
+    T3_01 = sdh(l1, np.pi+q31, 0, np.pi/2)
+    T3_12 = sdh(l2, q32, l3, 0)
+    T3_23 = sdh(0, q33, l4, 0)
+    T3_03 = T3_01.dot(T3_12).dot(T3_23)
+    T3_B0 = sTroty(-np.pi/2).dot(sTrotx(np.pi)).dot(sTrasl(0,d1,0))
+    T3_B3 = T3_B0.dot(T3_03)
+    if modo == 'pose':
+        quater = rot2quaternion(T3_B3[0:3,0:3])
+        position = T3_B3[0:3,3] 
+        pose = np.hstack((position,quater))
+        return pose
+    else:
+        return T3_B3
 
 
-def fk_pata4_pos(q):
-	# Pata 4
-	l1 = 0.125;l2=0.025;l3=0.105;l4=0.104;d1=0.075	
-	q41 = q[0];q42 = q[1];q43 = q[2];
-	T4_01 = sdh(l1, q41, 0, np.pi/2)
-	T4_12 = sdh(l2, q42, -l3, 0)
-	T4_23 = sdh(0, q43, -l4, 0)
-	T4_03 = T4_01.dot(T4_12).dot(T4_23)
-	T4_B0 = sTroty(-np.pi/2).dot(sTrasl(0,-d1,0))
-	T4_B3 = T4_B0.dot(T4_03)
-	return T4_B3
+def fk_pata4_pos(q, modo=''):
+    # Pata 4
+    l1 = 0.125;l2=0.025;l3=0.105;l4=0.104;d1=0.075	
+    q41 = q[0];q42 = q[1];q43 = q[2];
+    T4_01 = sdh(l1, q41, 0, np.pi/2)
+    T4_12 = sdh(l2, q42, -l3, 0)
+    T4_23 = sdh(0, q43, -l4, 0)
+    T4_03 = T4_01.dot(T4_12).dot(T4_23)
+    T4_B0 = sTroty(-np.pi/2).dot(sTrasl(0,-d1,0))
+    T4_B3 = T4_B0.dot(T4_03)
+    if modo == 'pose':
+        quater = rot2quaternion(T4_B3[0:3,0:3])
+        position = T4_B3[0:3,3] 
+        pose = np.hstack((position,quater))
+        return pose
+    else:
+        return T4_B3
 
 def fk_pata_pos(q,pata,modo=''):
     if pata == 1:
     	T = fk_pata1_pos(q,modo)
     elif pata == 2: 
-    	T = fk_pata2_pos(q)
+    	T = fk_pata2_pos(q,modo)
     elif pata == 3: 
-    	T = fk_pata3_pos(q)
+    	T = fk_pata3_pos(q,modo)
     elif pata == 4: 
-    	T = fk_pata4_pos(q)
+    	T = fk_pata4_pos(q,modo)
     return T
 
 
@@ -376,3 +394,55 @@ def jacobian_a_posev2(q, pata, delta=0.0001):
                   fk_pata_pos(np.array([q1,q2,q3+delta]),pata,'pose')-fk_pata_pos(q,pata,'pose')])
     J = JT.transpose()
     return J
+
+# ===============================================
+#  Funciones de control cinemático diferencial
+# ===============================================
+
+
+# Control de la tarea 
+def control_fkdiff(x,xd,q1,dt,pata,k=1):
+    """
+     Función que resuelve la tarea del error para obtener
+     la velocidad angular de cada articulación
+     Entradas: 
+        - x (posición actual - Espacio Operacional)
+        - xd (posición deseada - Espacio Operacional)
+        - q1 (posición actual - espacio articular)
+        - k (Ganancia proporicual - Lambda) / Por defecto = 1   
+    """
+    ep = xd[0:3] - x[0:3] 
+    Qe = error_quaterv2(x[3:7], xd[3:7])
+    e0 = np.array([[Qe[0,0]-1],
+           [Qe[1,0]],
+           [Qe[2,0]],
+           [Qe[3,0]]])
+    e = np.array([[ep[0]],[ep[1]],[ep[2]],[e0[0,0]],[e0[1,0]],[e0[2,0]],[e0[3,0]]]) 
+   
+    e_dot = k*e
+    J = jacobian_a_posev2(q1,pata)
+    try: 
+        J_mul = np.linalg.inv(J.T.dot(J)).dot(J.T)
+    except np.linalg.LinAlgError:
+        J_mul = (J.transpose()).dot(np.linalg.inv(J.dot(J.transpose()) + k*np.eye(3)))
+    
+    q_dot = J_mul.dot(e_dot)
+    q_dot_vect = np.array([q_dot[0,0],q_dot[1,0],q_dot[2,0]])
+    q1 =  q1 + dt*q_dot_vect
+    return q1
+
+# Actualización de variables - Estado Inicial
+def update_initial_state(q0):
+    x_pos = []
+    T_pos = []
+    pata_values = [[3,6],[9,12],[0,3],[6,9]] 
+    for a in range(4):
+        tmp = pata_values[a]
+        q = q0[tmp[0]:tmp[1]]
+        T = fk_pata_pos(q,a+1)
+        quater = rot2quaternion(T[0:3,0:3])
+        position = T[0:3,3] # Posición en el espacio cartesiano
+        x = np.hstack((position,quater))
+        x_pos.append(x)
+        T_pos.append(T)
+    return x_pos,T_pos

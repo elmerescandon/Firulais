@@ -15,38 +15,39 @@ jnames = ["front_right_j1", "front_right_j2", "front_right_j3",
 
 # Posición deseada
 pata =  1
-qd = np.deg2rad(np.array([0,0,0]))
-Td=fk_pata_pos(qd,pata)
-quaterd = rot2quaternion(Td[0:3,0:3])
-positiond = Td[0:3,3] # Posición en el espacio cartesiano
-# Pose tiene la forma = x,y,z,ew,ex,ey,ez
-xd = np.hstack((positiond,quaterd))
+qd = np.deg2rad(np.array([-30,0,0,
+						  30,0,0,
+						  30,0,0,
+						  -30,0,0]))
+
+xd,Td = update_initial_state(qd)
+xd1 = xd[0]; xd2 = xd[1]; xd3 = xd[2]; xd4 = xd[3]
+
 
 # Inicializar vector
 q0 = np.deg2rad(np.array([0,0,0,
-			   			  30,0,90,
-			   			  50,0,0,
+			   			  0,0,0,
+			   			  0,0,0,
 			   			  0,0,0]))
 
 # Pata 1: Superior Izquierda (q1) y posición actual
 q1 = q0[3:6]
-T=fk_pata_pos(q1,pata)
-quater = rot2quaternion(T[0:3,0:3])
-position = T[0:3,3] # Posición en el espacio cartesiano
-x = np.hstack((position,quater))
-
-
 # Pata 2: Inferior Izquierda (q2)
 q2 = q0[9:12]
-
 # Pata 3: Superior Derecha (q3)
 q3 = q0[0:3]
-	
 # Pata 4: Inferior Derecha (q4)
 q4 = q0[6:9]
 
+x,T = update_initial_state(q0)
+x1 = x[0]; x2 = x[1]; x3 = x[2]; x4 = x[3]
+
 # Ball markers
 bmarker1 = BallMarker(color['RED'])
+bmarker2 = BallMarker(color['BLUE'])
+bmarker3 = BallMarker(color['GREEN'])
+bmarker4 = BallMarker(color['YELLOW'])
+
 
 # Creación de nodo
 rospy.init_node('diff_fk_joints_pos_test')
@@ -63,45 +64,35 @@ freq = 20
 dt = 1.0/freq
 rate = rospy.Rate(freq)
 counter_xd = 0 
-print(dt)
-q_dot_vect = np.array([0,0,0])
 
 while not rospy.is_shutdown():
 	articulaciones.header.stamp = rospy.Time.now()
+	# print(np.round(q0,2))
 	articulaciones.position = q0
 	pub.publish(articulaciones)
 	# Pata 1: Superior Izquierda (q1)
 	q1 = q0[3:6]
+	q1 = control_fkdiff(x1,xd1,q1,dt,1)
 
-	# Kinematic control law for the pose (complete here)
-	k = 1# Ganancia proporcional
-	# --------------------------------------------------
-	# Error por la posición
-	ep = xd[0:3] - x[0:3] 
-	Qe = error_quaterv2(x[3:7], xd[3:7])
-	e0 = np.array([[Qe[0,0]-1],
-	       [Qe[1,0]],
-	       [Qe[2,0]],
-	       [Qe[3,0]]])
-	e = np.array([[ep[0]],[ep[1]],[ep[2]],[e0[0,0]],[e0[1,0]],[e0[2,0]],[e0[3,0]]]) 	
-	# print(e)
-	e_dot = k*e
-	J = jacobian_a_posev2(q1,1)
-	velocity = J.dot(q_dot_vect)
-	velocity = velocity[0:3]
-	try: 
-		J_mul = np.linalg.inv(J.T.dot(J)).dot(J.T)
-	except np.linalg.LinAlgError:
-		J_mul = (J.T).dot(np.linalg.inv(J.dot(J.transpose()) + (k_a)*np.eye(7))).dot(velocity)
-	q_dot = J_mul.dot(e_dot)
-	q_dot_vect = np.array([q_dot[0,0],q_dot[1,0],q_dot[2,0]])
-	# print(q_dot)
-	q1 =  q1 + dt*q_dot_vect
+	# Pata 2: Inferior Izquierda (q2)
+	q2 = q0[9:12]
+	q2 = control_fkdiff(x2,xd2,q2,dt,2)
+
+	# Pata 3: Superior Derecha (q3)
+	q3 = q0[0:3]
+	q3 = control_fkdiff(x3,xd3,q3,dt,3)
+	
+	# Pata 4: Inferior Derecha (q4)
+	q4 = q0[6:9]
+	q4 = control_fkdiff(x4,xd4,q4,dt,4)
+	
+	# Actualización de ángulo (q0)
+	q0[3:6] = q1; q0[9:12] = q2;	q0[6:9] = q4; q0[0:3] = q3
 	# Current configuration trnaformation to current position
-	T = fk_pata_pos(q1,pata)
-	quater = rot2quaternion(T[0:3,0:3])
-	position = T[0:3,3] # Posición en el espacio cartesiano
-	x = np.hstack((position,quater))
-	q0[3:6] = q1
-	bmarker1.position(Td)
+	x,T = update_initial_state(q0)
+	x1 = x[0]; x2 = x[1]; x3 = x[2]; x4 = x[3]
+	bmarker1.position(Td[0])
+	bmarker2.position(Td[1])
+	bmarker3.position(Td[2])
+	bmarker4.position(Td[3])
 	rate.sleep()
