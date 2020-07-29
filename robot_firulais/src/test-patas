@@ -7,7 +7,7 @@ from sensor_msgs.msg import JointState
 from funciones import *
 from markers import *
 from pyquaternion import Quaternion
-
+import tf
 	
 # Joint names
 jnames = ["abductor3_joint", "muslo3_joint", "tobillo3_joint",
@@ -16,10 +16,10 @@ jnames = ["abductor3_joint", "muslo3_joint", "tobillo3_joint",
           "abductor2_joint", "muslo2_joint", "tobillo2_joint"]
 
 # Inicializar vector
-q0 = np.deg2rad(np.array([30,30,30,
-			   			  30,30,30,
-			   			  30,30,30,
-			   			  30,30,30]))
+q0 = np.deg2rad(np.array([0,0,0,
+			   			  0,0,0,
+			   			  0,0,0,
+			   			  0,0,0]))
 
 # Pata 1: Superior Izquierda (q1)
 q1 = q0[3:6]
@@ -38,7 +38,7 @@ bmarker1 = BallMarker(color['RED'])
 bmarker2 = BallMarker(color['BLUE'])
 bmarker3 = BallMarker(color['GREEN'])
 bmarker4 = BallMarker(color['YELLOW'])
-
+br = tf.TransformBroadcaster()
 # Creación de nodo
 rospy.init_node('joints_test')
 
@@ -74,11 +74,15 @@ while not rospy.is_shutdown():
 	# Pata 4: Inferior Derecha (q4)
 	q4 = q0[6:9]
 
-	xfl = fk_pata1_pos(q1)
-	xrl = fk_pata2_pos(q2)
+	xrl = fk_pata1_pos(q1)#xfl
+	xfl = fk_pata2_pos(q2)#xrl
 	xfr = fk_pata3_pos(q3)
 	xrr = fk_pata4_pos(q4)
-	# print(Quaternion(matrix=xrl[0:3,0:3]))
+	quat = Quaternion(matrix=xrl[0:3,0:3])
+	print()
+	# br.sendTransform((xrl[0,3],xrl[1,3],xrl[1,2]),(quat[1],quat[2],quat[3],quat[0]),rospy.Time.now(),'dh0d','base_link')
+	
+
 	bmarker1.position(xfl)
 	bmarker2.position(xfr)
 	bmarker3.position(xrr)

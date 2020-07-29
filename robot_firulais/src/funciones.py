@@ -31,9 +31,16 @@ def rot2quaternion(R):
     Lo de vuelve de la forma:
     q = (w,ex,ey,ez)
     """
-    q = Quaternion(matrix=R)
-    re = np.array([q[0],q[1],q[2],q[3]])
-    return re
+    omega = ((1+R[0, 0]+R[1, 1]+R[2, 2])**0.5)*0.5
+    if omega == 0: 
+        quat = Quaternion(matrix=R)
+        q = np.array([q[0],q[1],q[2],q[3]])
+        return q
+    else :
+        ex = (1/(4*omega))*(R[2, 1]-R[1, 2])
+        ey = (1/(4*omega))*(R[0, 2]-R[2, 0])
+        ez = (1/(4*omega))*(R[1, 0]-R[0, 1])
+        return np.array([omega,ex,ey,ez])
 
 def sTrasl(x, y, z):
     """ Matriz de transformada homogenea de traslacion
@@ -144,7 +151,6 @@ def fk_pata1_pos(q, modo=''):
 
 
 def fk_pata2_pos(q, modo=''):
-    # Pata 2
     # Pata 2
     dx = 0.116940
     dy = 0.055642
@@ -418,9 +424,7 @@ def jacobian_a_posev2(q, pata, delta=0.0001):
 #  Funciones de control cinemático diferencial
 # ===============================================
 
-
-# Control de la tarea 
-def control_fkdiff(x,xd,q1,dt,pata,k=1.5):
+def control_fkdiff(x,xd,q1,dt,pata,k=1):
     """
      Función que resuelve la tarea del error para obtener
      la velocidad angular de cada articulación
@@ -429,31 +433,27 @@ def control_fkdiff(x,xd,q1,dt,pata,k=1.5):
         - xd (posición deseada - Espacio Operacional)
         - q1 (posición actual - espacio articular)
         - k (Ganancia proporicual - Lambda) / Por defecto = 1   
-    """
-    ep = xd[0:3] -x[0:3] 
+    """ 
+    ep = xd[0:3] - x[0:3] 
     Qe = error_quaterv2(x[3:7], xd[3:7])
     e0 = np.array([[Qe[0,0]-1],
            [Qe[1,0]],
            [Qe[2,0]],
            [Qe[3,0]]])
     e = np.array([[ep[0]],[ep[1]],[ep[2]],[e0[0,0]],[e0[1,0]],[e0[2,0]],[e0[3,0]]]) 
-    
-    if pata==2:
-        print(e[0:3])
-        print("==================================")
 
     e_dot = k*e
-    J = jacobian_a_pose(q1,pata)
+    J = jacobian_a_posev2(q1,pata)
     try: 
-        J_mul = np.linalg.inv(J.T.dot(J)).dot(J.T)
+        J_mul = np.linalg.pinv(J)
     except np.linalg.LinAlgError:
-        print("Matriz de rango no completo ")
-        J_mul = (J.transpose()).dot(np.linalg.inv(J.dot(J.transpose()) + k*np.eye(3)))
-    
+        J_mul = (J.transpose()).dot(np.linalg.inv(J.dot(J.transpose()) + k*np.eye(7)))
+
     q_dot = J_mul.dot(e_dot)
     q_dot_vect = np.array([q_dot[0,0],q_dot[1,0],q_dot[2,0]])
     q1 =  q1 + dt*q_dot_vect
     return q1
+
 
 # Actualización de variables - Estado Inicial
 def update_initial_state(q0):

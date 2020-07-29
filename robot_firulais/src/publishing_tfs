@@ -9,29 +9,80 @@ from pyquaternion import Quaternion
 
 
 q = np.deg2rad(np.array([30,30,30]))
-Ts = fk_pata2_pos(q)
-T1_B0 = Ts
-print(Ts)
-
-# T1_B1 = Ts[1]
-# T1_B2 = Ts[2]
-# T1_B3 = Ts[3]
+Ts = fk_pata1(q)
+T1_B0 = Ts[0]
+T1_B1 = Ts[1]
+T1_B2 = Ts[2]
+T1_B3 = Ts[3]
 
 q1 = Quaternion(matrix=T1_B0[0:3,0:3])
-# q2 = Quaternion(matrix=T1_B1[0:3,0:3])
-# q3 = Quaternion(matrix=T1_B2[0:3,0:3])
-# q4 = Quaternion(matrix=T1_B3[0:3,0:3])
+q2 = Quaternion(matrix=T1_B1[0:3,0:3])
+q3 = Quaternion(matrix=T1_B2[0:3,0:3])
+q4 = Quaternion(matrix=T1_B3[0:3,0:3])
 
-# q8d = Quaternion(matrix=T1_B0[0:3,0:3])
-print(q1)
-print(T1_B0[0:3,3])
+
+q2_q = np.deg2rad(np.array([30,30,30]))
+Ts = fk_pata2(q2_q)
+T21_B0 = Ts[0]
+T21_B1 = Ts[1]
+T21_B2 = Ts[2]
+T21_B3 = Ts[3]
+
+q21 = Quaternion(matrix=T21_B0[0:3,0:3])
+q22 = Quaternion(matrix=T21_B1[0:3,0:3])
+q23 = Quaternion(matrix=T21_B2[0:3,0:3])
+q24 = Quaternion(matrix=T21_B3[0:3,0:3])
+
+q3_q = np.deg2rad(np.array([30,30,30]))
+Ts = fk_pata3(q3_q)
+T31_B0 = Ts[0]
+T31_B1 = Ts[1]
+T31_B2 = Ts[2]
+T31_B3 = Ts[3]
+
+q31 = Quaternion(matrix=T31_B0[0:3,0:3])
+q32 = Quaternion(matrix=T31_B1[0:3,0:3])
+q33 = Quaternion(matrix=T31_B2[0:3,0:3])
+q34 = Quaternion(matrix=T31_B3[0:3,0:3])
+
+q4_q = np.deg2rad(np.array([0,-15,45]))
+Ts = fk_pata4(q4_q)
+T41_B0 = Ts[0]
+T41_B1 = Ts[1]
+T41_B2 = Ts[2]
+T41_B3 = Ts[3]
+
+q41 = Quaternion(matrix=T41_B0[0:3,0:3])
+q42 = Quaternion(matrix=T41_B1[0:3,0:3])
+q43 = Quaternion(matrix=T41_B2[0:3,0:3])
+q44 = Quaternion(matrix=T41_B3[0:3,0:3])
+
+
+
 
 rospy.init_node('fixed_tf_broadcaster')
 br = tf.TransformBroadcaster()
 rate = rospy.Rate(10)
 while not rospy.is_shutdown(): 
-	br.sendTransform((T1_B0[0,3],T1_B0[1,3],T1_B0[2,3]),(q1[1],q1[2],q1[3],q1[0]),rospy.Time.now(),'dh0','base_link')
-	# br.sendTransform((T1_B1[0,3],T1_B1[1,3],T1_B1[2,3]),(q2[1],q2[2],q2[3],q2[0]),rospy.Time.now(),'dh1','dh0',)
-	# br.sendTransform((T1_B2[0,3],T1_B2[1,3],T1_B2[2,3]),(q3[1],q3[2],q3[3],q3[0]),rospy.Time.now(),'dh2','dh1',)
-	# br.sendTransform((T1_B3[0,3],T1_B3[1,3],T1_B3[2,3]),(q4[1],q4[2],q4[3],q4[0]),rospy.Time.now(),'dh3','dh2',)
+	br.sendTransform((T1_B0[0,3],T1_B0[1,3],T1_B0[2,3]),(q1[1],q1[2],q1[3],q1[0]),rospy.Time.now(),'dhp1_0','base_link')
+	br.sendTransform((T1_B1[0,3],T1_B1[1,3],T1_B1[2,3]),(q2[1],q2[2],q2[3],q2[0]),rospy.Time.now(),'dhp1_1','dhp1_0',)
+	br.sendTransform((T1_B2[0,3],T1_B2[1,3],T1_B2[2,3]),(q3[1],q3[2],q3[3],q3[0]),rospy.Time.now(),'dhp1_2','dhp1_1',)
+	br.sendTransform((T1_B3[0,3],T1_B3[1,3],T1_B3[2,3]),(q4[1],q4[2],q4[3],q4[0]),rospy.Time.now(),'dhp1_3','dhp1_2',)
+
+	br.sendTransform((T21_B0[0,3],T21_B0[1,3],T21_B0[2,3]),(q21[1],q21[2],q21[3],q21[0]),rospy.Time.now(),'dhp2_0','base_link')
+	br.sendTransform((T21_B1[0,3],T21_B1[1,3],T21_B1[2,3]),(q22[1],q22[2],q22[3],q22[0]),rospy.Time.now(),'dhp2_1','dhp2_0',)
+	br.sendTransform((T21_B2[0,3],T21_B2[1,3],T21_B2[2,3]),(q23[1],q23[2],q23[3],q23[0]),rospy.Time.now(),'dhp2_2','dhp2_1',)
+	br.sendTransform((T21_B3[0,3],T21_B3[1,3],T21_B3[2,3]),(q24[1],q24[2],q24[3],q24[0]),rospy.Time.now(),'dhp2_3','dhp2_2',)
+
+
+	br.sendTransform((T31_B0[0,3],T31_B0[1,3],T31_B0[2,3]),(q31[1],q31[2],q31[3],q31[0]),rospy.Time.now(),'dhp3_0','base_link')
+	br.sendTransform((T31_B1[0,3],T31_B1[1,3],T31_B1[2,3]),(q32[1],q32[2],q32[3],q32[0]),rospy.Time.now(),'dhp3_1','dhp3_0',)
+	br.sendTransform((T31_B2[0,3],T31_B2[1,3],T31_B2[2,3]),(q33[1],q33[2],q33[3],q33[0]),rospy.Time.now(),'dhp3_2','dhp3_1',)
+	br.sendTransform((T31_B3[0,3],T31_B3[1,3],T31_B3[2,3]),(q34[1],q34[2],q34[3],q34[0]),rospy.Time.now(),'dhp3_3','dhp3_2',)
+
+	br.sendTransform((T41_B0[0,3],T41_B0[1,3],T41_B0[2,3]),(q41[1],q41[2],q41[3],q41[0]),rospy.Time.now(),'dhp4_0','base_link')
+	br.sendTransform((T41_B1[0,3],T41_B1[1,3],T41_B1[2,3]),(q42[1],q42[2],q42[3],q42[0]),rospy.Time.now(),'dhp4_1','dhp4_0',)
+	br.sendTransform((T41_B2[0,3],T41_B2[1,3],T41_B2[2,3]),(q43[1],q43[2],q43[3],q43[0]),rospy.Time.now(),'dhp4_2','dhp4_1',)
+	br.sendTransform((T41_B3[0,3],T41_B3[1,3],T41_B3[2,3]),(q44[1],q44[2],q44[3],q44[0]),rospy.Time.now(),'dhp4_3','dhp4_2',)
+
 	rate.sleep()

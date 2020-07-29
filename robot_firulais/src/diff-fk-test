@@ -6,6 +6,9 @@ import rospy
 from sensor_msgs.msg import JointState
 from funciones import *
 from markers import *
+import matplotlib.pyplot as plt
+import tf
+
 
 # Joint names
 jnames = ["abductor3_joint", "muslo3_joint", "tobillo3_joint",
@@ -15,20 +18,21 @@ jnames = ["abductor3_joint", "muslo3_joint", "tobillo3_joint",
 
 # Posición deseada
 pata =  1
-qd = np.deg2rad(np.array([30,0,30,
-						  30,30,30,
-						  30,30,30,
-						  30,30,30]))
+qd = np.deg2rad(np.array([15.3,-4.3,29.5,
+			   			  19.3,24.3,39.5,
+			   			  30.34,-20.5,9.5,
+			   			  25.3,54.3,69.5]))
 
 xd,Td = update_initial_state(qd)
 xd1 = xd[0]; xd2 = xd[1]; xd3 = xd[2]; xd4 = xd[3]
 
 
 # Inicializar vector
-q0 = np.deg2rad(np.array([30,0,0,
-			   			  0,30,0,
-			   			  0,30,0,
-			   			  0,0,-30]))
+q0 = np.deg2rad(np.array([30,-10,-30,
+			   			  30,0,0,
+			   			  0,0,0,
+			   			  10,45,0]))
+
 
 # Pata 1: Superior Izquierda (q1) y posición actual
 q1 = q0[3:6]
@@ -42,6 +46,7 @@ q4 = q0[6:9]
 x,T = update_initial_state(q0)
 x1 = x[0]; x2 = x[1]; x3 = x[2]; x4 = x[3]
 
+br = tf.TransformBroadcaster()
 # Ball markers
 bmarker1 = BallMarker(color['RED'])
 bmarker2 = BallMarker(color['BLUE'])
@@ -60,10 +65,20 @@ articulaciones = JointState()
 articulaciones.name = jnames 
 articulaciones.position = q0
 
-freq = 100
+freq = 20
 dt = 1.0/freq
 rate = rospy.Rate(freq)
 counter_xd = 0 
+
+x_plot = []
+y_plot = []
+z_plot = []
+qom_plot = []
+qx_plot = []
+qy_plot = []
+qz_plot = []
+contador = 0
+
 
 while not rospy.is_shutdown():
 	articulaciones.header.stamp = rospy.Time.now()
@@ -95,4 +110,63 @@ while not rospy.is_shutdown():
 	bmarker2.position(Td[1])
 	bmarker3.position(Td[2])
 	bmarker4.position(Td[3])
+	print(q2)
+	br.sendTransform((x3[0],x3[1],x3[2]),(x3[3],x3[4],x3[5],x3[6]),rospy.Time.now(),'dh0','base_link')
+	br.sendTransform((xd3[0],xd3[1],xd3[2]),(xd3[3],xd3[4],xd3[5],xd3[6]),rospy.Time.now(),'dh0d','base_link')
+	# br.sendTransform((x1[0],x1[1],x1[2]),(x1[3],x1[4],x1[5],x1[6]),rospy.Time.now(),'dh1','base_link')
+	if contador <=400:
+		x_plot.append(x3[0])
+		y_plot.append(x3[1])
+		z_plot.append(x3[2])
+		qom_plot.append(x3[3])
+		qx_plot.append(x3[4])
+		qy_plot.append(x3[5])
+		qz_plot.append(x3[6])
+		contador = contador + 1
+	else: 
+		pass
+		# break;
 	rate.sleep()
+
+time = np.linspace(0,400*dt,dt)
+plt.figure("Pata 1")
+plt.suptitle('Cinematica Diferencial de posicion y orientacion - Pata 3', fontsize=16)
+plt.subplot(421)
+plt.plot(x_plot)
+plt.xlabel('t')
+plt.ylabel('Posicion X(m)')
+plt.grid()
+
+plt.subplot(423)
+plt.plot(y_plot)
+plt.xlabel('t')
+plt.ylabel('Posicion Y(m)')
+plt.grid()
+plt.subplot(425)
+plt.plot(z_plot)
+plt.xlabel('t')
+plt.ylabel('Posicion Z(m)')
+plt.grid()
+
+plt.subplot(422)
+plt.plot(qom_plot)
+plt.xlabel('t')
+plt.ylabel(r'Quaternion \omega')
+plt.grid()
+plt.subplot(424)
+plt.plot(qx_plot)
+plt.xlabel('t')
+plt.ylabel(r'Quaternion \epsilon_x')
+plt.grid()
+plt.subplot(426)
+plt.plot(qy_plot)
+plt.xlabel('t')
+plt.ylabel(r'Quaternion \epsilon_y')
+plt.grid()
+plt.subplot(414)
+plt.plot(qz_plot)
+plt.xlabel('t')
+plt.ylabel(r'Quaternion \epsilon_z')
+plt.grid()
+# print(q_plot)
+plt.show()
