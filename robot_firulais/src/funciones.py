@@ -32,7 +32,8 @@ def rot2quaternion(R):
     q = (w,ex,ey,ez)
     """
     q = Quaternion(matrix=R)
-    return q
+    re = np.array([q[0],q[1],q[2],q[3]])
+    return re
 
 def sTrasl(x, y, z):
     """ Matriz de transformada homogenea de traslacion
@@ -121,13 +122,12 @@ def error_quaterv2(qact, qd):
 # únicamente la posición 
 
 def fk_pata1_pos(q, modo=''):
-    # Pata 1
     dx = 0.116940
     dy = 0.055642
     dz = 0.012717
     T1_B0 = sTrasl(dx, dy, dz).dot(sTroty(np.pi / 2)).dot(sTrotz(np.pi / 2))
-    T1_01 = sdh(0, q[0] + np.pi / 2, -0.01, np.pi / 2)
-    T1_12 = sdh(0, q[1] - np.deg2rad(90-76.111)+np.pi, 0.105627, 0)
+    T1_01 = sdh(0, q[0]+np.pi/2, -0.01, np.pi / 2)
+    T1_12 = sdh(0, q[1] - np.deg2rad(90-76.111), -0.105627, 0)
     T1_23 = sdh(0.0732435, q[2] + np.deg2rad(90-76.111) + np.pi, 0.1, 0)
 
     # T1_B0 = sTrasl(bx,by,bz).dot(sTroty(np.pi/2)).dot(sTrotz(np.pi))
@@ -168,25 +168,25 @@ def fk_pata2_pos(q, modo=''):
 
 def fk_pata3_pos(q, modo=''):
     # Pata 3
-    dx = 0.116940
-    dy = 0.055642
-    dz = 0.012717
-    T1_B0 = sTrasl(dx,-dy, dz).dot(sTroty(np.pi / 2)).dot(sTrotz(np.pi / 2))
-    T1_01 = sdh(0, q[0]+np.pi/2, 0.01, np.pi / 2)
-    T1_12 = sdh(0, q[1] - np.deg2rad(90-76.111), -0.105627, 0)
-    T1_23 = sdh(0.0732435, q[2] + np.deg2rad(90-76.111) + np.pi, 0.1, 0)
+	dx = 0.116940
+	dy = 0.055642
+	dz = 0.012717
+	T1_B0 = sTrasl(dx, -dy, dz).dot(sTroty(np.pi / 2)).dot(sTrotz(-np.pi / 2))
+	T1_01 = sdh(0, q[0]+np.pi/2, 0.01, np.pi / 2)
+	T1_12 = sdh(0, q[1] + np.deg2rad(90-76.111) + np.pi, -0.105627, 0)
+	T1_23 = sdh(0.0732435, q[2] - np.deg2rad(90-76.111) + np.pi, 0.1, 0)
 
-    # T1_B0 = sTrasl(bx,by,bz).dot(sTroty(np.pi/2)).dot(sTrotz(np.pi))
-    T1_B1 = T1_B0.dot(T1_01)
-    T1_B2 = T1_B0.dot(T1_01).dot(T1_12)
-    T1_B3 = T1_B0.dot(T1_01).dot(T1_12).dot(T1_23)
-    if modo == 'pose':
-        quater = rot2quaternion(T3_B3[0:3,0:3])
-        position = T1_B3[0:3,3] 
-        pose = np.hstack((position,quater))
-        return pose
-    else:
-        return T3_B3
+	# T1_B0 = sTrasl(bx,by,bz).dot(sTroty(np.pi/2)).dot(sTrotz(np.pi))
+	T1_B1 = T1_B0.dot(T1_01)
+	T1_B2 = T1_B0.dot(T1_01).dot(T1_12)
+	T1_B3 = T1_B0.dot(T1_01).dot(T1_12).dot(T1_23)
+	if modo == 'pose':
+		quater = rot2quaternion(T1_B3[0:3,0:3])
+		position = T1_B3[0:3,3] 
+		pose = np.hstack((position,quater))
+		return pose
+	else:
+		return T1_B3
 
 
 def fk_pata4_pos(q, modo=''):
@@ -204,12 +204,12 @@ def fk_pata4_pos(q, modo=''):
     T1_B2 = T1_B0.dot(T1_01).dot(T1_12)
     T1_B3 = T1_B0.dot(T1_01).dot(T1_12).dot(T1_23)
     if modo == 'pose':
-        quater = rot2quaternion(T4_B3[0:3,0:3])
+        quater = rot2quaternion(T1_B3[0:3,0:3])
         position = T1_B3[0:3,3] 
         pose = np.hstack((position,quater))
         return pose
     else:
-        return T4_B3
+        return T1_B3
 
 def fk_pata_pos(q,pata,modo=''):
     if pata == 1:

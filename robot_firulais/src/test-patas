@@ -15,9 +15,9 @@ jnames = ["abductor3_joint", "muslo3_joint", "tobillo3_joint",
 
 # Inicializar vector
 q0 = np.deg2rad(np.array([30,30,30,
-			   			  0,0,0,
 			   			  30,30,30,
-			   			  0,0,0]))
+			   			  30,30,30,
+			   			  30,30,60]))
 
 # Pata 1: Superior Izquierda (q1)
 q1 = q0[3:6]
@@ -33,8 +33,8 @@ q4 = q0[6:9]
 
 # Ball markers
 bmarker1 = BallMarker(color['RED'])
-# bmarker2 = BallMarker(color['BLUE'])
-# bmarker3 = BallMarker(color['GREEN'])
+bmarker2 = BallMarker(color['BLUE'])
+bmarker3 = BallMarker(color['GREEN'])
 bmarker4 = BallMarker(color['YELLOW'])
 
 # Creación de nodo
@@ -54,7 +54,7 @@ rate = rospy.Rate(10)
 q2 = np.array([0,0,0])
 while not rospy.is_shutdown():
 	articulaciones.header.stamp = rospy.Time.now()
-	# q0 = q0 + 0.1 
+	q0 = q0 + 0.1 
 	articulaciones.position = q0
 	pub.publish(articulaciones)
 	# Pata 1: Superior Izquierda (q1)
@@ -71,12 +71,12 @@ while not rospy.is_shutdown():
 
 	xfl = fk_pata1_pos(q1)
 	xrl = fk_pata2_pos(q2)
-	# xfr = fk_pata3_pos(q3)
-	# xrr = fk_pata4_pos(q4)
-	print(np.round(xfl,2))
+	xfr = fk_pata3_pos(q3)
+	xrr = fk_pata4_pos(q4)
+	print(np.round(xfl,4))
 	bmarker1.position(xfl)
-	# bmarker2.position(xfr)
-	# bmarker3.position(xrr)
+	bmarker2.position(xfr)
+	bmarker3.position(xrr)
 	bmarker4.position(xrl)
 
 	rate.sleep()

@@ -130,14 +130,6 @@ Visualization Manager:
           Value: false
         base_link:
           Value: true
-        dh0:
-          Value: true
-        dh1:
-          Value: true
-        dh2:
-          Value: true
-        dh3:
-          Value: true
         muslo1_link:
           Value: false
         muslo2_link:
@@ -177,12 +169,15 @@ Visualization Manager:
             muslo4_link:
               tobillo4_link:
                 {}
-          dh0:
-            dh1:
-              dh2:
-                dh3:
-                  {}
       Update Interval: 0
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /visualization_marker
+      Name: Marker
+      Namespaces:
+        ball_markers: true
+      Queue Size: 100
       Value: true
   Enabled: true
   Global Options:
@@ -224,10 +219,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.0497958548
+      Pitch: 0.364795893
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.61423206
+      Yaw: 1.64604652
     Saved: ~
 Window Geometry:
   Displays:

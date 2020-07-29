@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from scipy.spatial.transform import Rotation as R
 import rospy
 import roslib
 import tf
@@ -10,19 +9,21 @@ from pyquaternion import Quaternion
 
 
 q = np.deg2rad(np.array([30,30,30]))
-Ts = fk_pata4(q)
-T1_B0 = Ts[0]
-T1_B1 = Ts[1]
-T1_B2 = Ts[2]
-T1_B3 = Ts[3]
+Ts = fk_pata3(q)
+T1_B0 = Ts
+print(Ts)
+
+# T1_B1 = Ts[1]
+# T1_B2 = Ts[2]
+# T1_B3 = Ts[3]
 
 q1 = Quaternion(matrix=T1_B0[0:3,0:3])
-q2 = Quaternion(matrix=T1_B1[0:3,0:3])
-q3 = Quaternion(matrix=T1_B2[0:3,0:3])
-q4 = Quaternion(matrix=T1_B3[0:3,0:3])
+# q2 = Quaternion(matrix=T1_B1[0:3,0:3])
+# q3 = Quaternion(matrix=T1_B2[0:3,0:3])
+# q4 = Quaternion(matrix=T1_B3[0:3,0:3])
 
 q8d = Quaternion(matrix=T1_B0[0:3,0:3])
-print(q8d[0])
+# print(q8d[0])
 
 rospy.init_node('fixed_tf_broadcaster')
 br = tf.TransformBroadcaster()
