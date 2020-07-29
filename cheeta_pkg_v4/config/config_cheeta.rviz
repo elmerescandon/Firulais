@@ -130,6 +130,8 @@ Visualization Manager:
           Value: false
         base_link:
           Value: true
+        dh0:
+          Value: true
         muslo1_link:
           Value: false
         muslo2_link:
@@ -169,6 +171,8 @@ Visualization Manager:
             muslo4_link:
               tobillo4_link:
                 {}
+          dh0:
+            {}
       Update Interval: 0
       Value: true
     - Class: rviz/Marker
@@ -204,25 +208,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 0.750414848
+      Distance: 0.511386633
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.0136192394
-        Y: -0.0238332953
-        Z: -0.0909486786
+        X: 0.0221197046
+        Y: 0.0529975258
+        Z: -0.179990724
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.364795893
+      Pitch: 0.50479573
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.64604652
+      Yaw: 2.49104667
     Saved: ~
 Window Geometry:
   Displays:

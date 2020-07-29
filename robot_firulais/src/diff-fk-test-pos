@@ -6,22 +6,34 @@ import rospy
 from sensor_msgs.msg import JointState
 from funciones import *
 from markers import *
+import matplotlib.pyplot as plt
 
 # Joint names
-jnames = ["front_right_j1", "front_right_j2", "front_right_j3",
-          "front_left_j1", "front_left_j2", "front_left_j3",
-          "rear_right_j1", "rear_right_j2", "rear_right_j3",
-          "rear_left_j1", "rear_left_j2", "rear_left_j3"]
-
+jnames = ["abductor3_joint", "muslo3_joint", "tobillo3_joint",
+          "abductor1_joint", "muslo1_joint", "tobillo1_joint",
+          "abductor4_joint", "muslo4_joint", "tobillo4_joint",
+          "abductor2_joint", "muslo2_joint", "tobillo2_joint"]
 # Posición deseada 
-qd = np.deg2rad(np.array([0,0,0]))
+qd = np.deg2rad(np.array([19.3,24.3,39.5]))
 Td = fk_pata1_pos(qd)
 xd = Td[0:3,3]
 # Inicializar vector
-q0 = np.deg2rad(np.array([0,0,0,
-			   			  0,0,0,
+q0 = np.deg2rad(np.array([30,-10,-30,
+			   			  30,0,0,
 			   			  0,0,0,
 			   			  0,0,0]))
+
+# q0_1 = 30,0,0
+# qd_1 = 19.3,24.3,39.5
+
+# q0_2 = 10,45,0
+# qd_2 = 25.3,54.3,69.5
+
+# q0_3 = 30,-10,-30
+# qd_3 = -15.3,-4.3,29.5
+
+# q0_4 = 0,0,0
+# qd_4 = 30.34,-20.5,9.5
 
 # Pata 1: Superior Izquierda (q1) y posición actual
 q1 = q0[3:6]
@@ -33,9 +45,10 @@ q2 = q0[9:12]
 
 # Pata 3: Superior Derecha (q3)
 q3 = q0[0:3]
-	
+
 # Pata 4: Inferior Derecha (q4)
 q4 = q0[6:9]
+
 
 # Ball markers
 bmarker1 = BallMarker(color['RED'])
@@ -57,6 +70,13 @@ dt = 1.0/freq
 rate = rospy.Rate(freq)
 counter_xd = 0 
 
+x_plot = []
+y_plot = []
+z_plot = []
+q1_plot = []
+q2_plot = []
+q3_plot = []
+contador = 0
 
 while not rospy.is_shutdown():
 	articulaciones.header.stamp = rospy.Time.now()
@@ -66,7 +86,7 @@ while not rospy.is_shutdown():
 	q1 = q0[3:6]
 
 	# Kinematic control law for the pose (complete here)
-	k = 0.4# Ganancia proporcional
+	k = 1 # Ganancia proporcional
 	k_a = 0.005
 	# --------------------------------------------------
 	# Error por la posición
@@ -74,10 +94,10 @@ while not rospy.is_shutdown():
 	e = np.array([[ep[0]],[ep[1]],[ep[2]]]) 
 	e_dot = -k*e
 	# J = jacob_a_pos(q1,1)
-	J = jacob_g(q1,1)
+	J = jacob_a_pos(q1,1)
 	J = J[0:3,0:3]
 	try: 
-	    J_mul = np.linalg.inv(J.T.dot(J)).dot(J)
+	    J_mul = np.linalg.inv(J)
 	except np.linalg.LinAlgError:
 		print("Matriz no completa")
 		J_mul = (J.transpose()).dot(np.linalg.inv(J.dot(J.transpose()) + k_a*np.eye(3)))
@@ -88,6 +108,58 @@ while not rospy.is_shutdown():
 	# Current configuration trnaformation to current position
 	T = fk_pata1_pos(q1)
 	x = T[0:3,3]
+	print(x)
 	q0[3:6] = q1
+
+	if contador <=400:
+		x_plot.append(x[0])
+		y_plot.append(x[1])
+		z_plot.append(x[2])
+		q1_plot.append(q1[0])
+		q2_plot.append(q1[1])
+		q3_plot.append(q1[2])
+		contador = contador + 1
+	else: 
+		break
 	bmarker1.position(Td)
 	rate.sleep()
+print(contador)
+
+time = np.linspace(0,400*dt,dt)
+
+plt.figure("Pata 4")
+plt.suptitle('Cinematica Diferencial de posicion - Pata 1', fontsize=16)
+plt.subplot(321)
+plt.plot(x_plot)
+plt.xlabel('t')
+plt.ylabel('Posicion X(m)')
+plt.grid()
+
+plt.subplot(323)
+plt.plot(y_plot)
+plt.xlabel('t')
+plt.ylabel('Posicion Y(m)')
+plt.grid()
+plt.subplot(325)
+plt.plot(z_plot)
+plt.xlabel('t')
+plt.ylabel('Posicion Z(m)')
+plt.grid()
+
+plt.subplot(322)
+plt.plot(q1_plot)
+plt.xlabel('t')
+plt.ylabel('Joint 1(rad)')
+plt.grid()
+plt.subplot(324)
+plt.plot(q2_plot)
+plt.xlabel('t')
+plt.ylabel('Joint 2(rad)')
+plt.grid()
+plt.subplot(326)
+plt.plot(q3_plot)
+plt.xlabel('t')
+plt.ylabel('Joint 3(rad)')
+plt.grid()
+# print(q_plot)
+plt.show()

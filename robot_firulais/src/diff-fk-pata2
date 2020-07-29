@@ -20,9 +20,8 @@ qd = np.deg2rad(np.array([30,0,30,
 						  30,30,30,
 						  30,30,30]))
 
-xd,Td = update_initial_state(qd)
-xd1 = xd[0]; xd2 = xd[1]; xd3 = xd[2]; xd4 = xd[3]
-
+xd2 = fk_pata2_pos(qd[9:12],'pose')
+Td2 = fk_pata2_pos(qd[9:12])
 
 # Inicializar vector
 q0 = np.deg2rad(np.array([30,0,0,
@@ -31,7 +30,7 @@ q0 = np.deg2rad(np.array([30,0,0,
 			   			  0,0,-30]))
 
 # Pata 1: Superior Izquierda (q1) y posición actual
-q1 = q0[3:6]
+q12 = q0[3:6]
 # Pata 2: Inferior Izquierda (q2)
 q2 = q0[9:12]
 # Pata 3: Superior Derecha (q3)
@@ -60,7 +59,7 @@ articulaciones = JointState()
 articulaciones.name = jnames 
 articulaciones.position = q0
 
-freq = 100
+freq = 20
 dt = 1.0/freq
 rate = rospy.Rate(freq)
 counter_xd = 0 
@@ -70,29 +69,30 @@ while not rospy.is_shutdown():
 	# print(np.round(q0,2))
 	articulaciones.position = q0
 	pub.publish(articulaciones)
-	# Pata 1: Superior Izquierda (q1)
-	q1 = q0[3:6]
-	q1 = control_fkdiff(x1,xd1,q1,dt,1)
+	ep = xd2[0:3] -x2[0:3] 
+	Qe = error_quaterv2(x2[3:7], xd2[3:7])
+	e0 = np.array([[Qe[0,0]-1],
+	       [Qe[1,0]],
+	       [Qe[2,0]],
+	       [Qe[3,0]]])
+	e = np.array([[ep[0]],[ep[1]],[ep[2]],[e0[0,0]],[e0[1,0]],[e0[2,0]],[e0[3,0]]]) 
+    
+	k = 1
+	e_dot = k*e
+	J = jacobian_a_pose(q2,2)
+	try: 
+		J_mul = np.linalg.pinv(J)
+	except np.linalg.LinAlgError:
+		print("Matriz de rango no completo ")
+		J_mul = (J.transpose()).dot(np.linalg.inv(J.dot(J.transpose()) + k*np.eye(3)))
 
-	# Pata 2: Inferior Izquierda (q2)
-	q2 = q0[9:12]
-	q2 = control_fkdiff(x2,xd2,q2,dt,2)
+	q_dot = J_mul.dot(e_dot)
+	q_dot_vect = np.array([q_dot[0,0],q_dot[1,0],q_dot[2,0]])
+	q2 =  q2 + dt*q_dot_vect
+	x2 = fk_pata2_pos(q2,'pose')
+	# Td2 = fk_pata2_pos(q2)
+	q0[9:12] = q2
+	# articulaciones.position = q0
+	bmarker2.position(Td2)
 
-	# Pata 3: Superior Derecha (q3)
-	q3 = q0[0:3]
-	q3 = control_fkdiff(x3,xd3,q3,dt,3)
-	
-	# Pata 4: Inferior Derecha (q4)
-	q4 = q0[6:9]
-	q4 = control_fkdiff(x4,xd4,q4,dt,4)
-	
-	# Actualización de ángulo (q0)
-	q0[3:6] = q1; q0[9:12] = q2;	q0[6:9] = q4; q0[0:3] = q3
-	# Current configuration trnaformation to current position
-	x,T = update_initial_state(q0)
-	x1 = x[0]; x2 = x[1]; x3 = x[2]; x4 = x[3]
-	bmarker1.position(Td[0])
-	bmarker2.position(Td[1])
-	bmarker3.position(Td[2])
-	bmarker4.position(Td[3])
 	rate.sleep()

@@ -9,7 +9,7 @@ from pyquaternion import Quaternion
 
 
 q = np.deg2rad(np.array([30,30,30]))
-Ts = fk_pata3(q)
+Ts = fk_pata2_pos(q)
 T1_B0 = Ts
 print(Ts)
 
@@ -22,15 +22,16 @@ q1 = Quaternion(matrix=T1_B0[0:3,0:3])
 # q3 = Quaternion(matrix=T1_B2[0:3,0:3])
 # q4 = Quaternion(matrix=T1_B3[0:3,0:3])
 
-q8d = Quaternion(matrix=T1_B0[0:3,0:3])
-# print(q8d[0])
+# q8d = Quaternion(matrix=T1_B0[0:3,0:3])
+print(q1)
+print(T1_B0[0:3,3])
 
 rospy.init_node('fixed_tf_broadcaster')
 br = tf.TransformBroadcaster()
 rate = rospy.Rate(10)
 while not rospy.is_shutdown(): 
 	br.sendTransform((T1_B0[0,3],T1_B0[1,3],T1_B0[2,3]),(q1[1],q1[2],q1[3],q1[0]),rospy.Time.now(),'dh0','base_link')
-	br.sendTransform((T1_B1[0,3],T1_B1[1,3],T1_B1[2,3]),(q2[1],q2[2],q2[3],q2[0]),rospy.Time.now(),'dh1','dh0',)
-	br.sendTransform((T1_B2[0,3],T1_B2[1,3],T1_B2[2,3]),(q3[1],q3[2],q3[3],q3[0]),rospy.Time.now(),'dh2','dh1',)
-	br.sendTransform((T1_B3[0,3],T1_B3[1,3],T1_B3[2,3]),(q4[1],q4[2],q4[3],q4[0]),rospy.Time.now(),'dh3','dh2',)
+	# br.sendTransform((T1_B1[0,3],T1_B1[1,3],T1_B1[2,3]),(q2[1],q2[2],q2[3],q2[0]),rospy.Time.now(),'dh1','dh0',)
+	# br.sendTransform((T1_B2[0,3],T1_B2[1,3],T1_B2[2,3]),(q3[1],q3[2],q3[3],q3[0]),rospy.Time.now(),'dh2','dh1',)
+	# br.sendTransform((T1_B3[0,3],T1_B3[1,3],T1_B3[2,3]),(q4[1],q4[2],q4[3],q4[0]),rospy.Time.now(),'dh3','dh2',)
 	rate.sleep()

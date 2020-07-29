@@ -145,26 +145,27 @@ def fk_pata1_pos(q, modo=''):
 
 def fk_pata2_pos(q, modo=''):
     # Pata 2
+    # Pata 2
     dx = 0.116940
     dy = 0.055642
     dz = 0.012717
-    T2_B0 = sTrasl(-dx, dy, dz).dot(sTroty(np.pi / 2)).dot(sTrotz(np.pi / 2))
-    T2_01 = sdh(0, q[0]+np.pi/2, -0.01, np.pi / 2)
-    T2_12 = sdh(0, q[1] - np.deg2rad(90-76.111), -0.105627, 0)
-    T2_23 = sdh(0.0732435, q[2] + np.deg2rad(90-76.111) + np.pi, 0.1, 0)
+    T1_B0 = sTrasl(-dx, dy, dz).dot(sTroty(np.pi / 2)).dot(sTrotz(np.pi / 2))
+    T1_01 = sdh(0, q[0]+np.pi/2, -0.01, np.pi / 2)
+    T1_12 = sdh(0, q[1] - np.deg2rad(90-76.111), -0.105627, 0)
+    T1_23 = sdh(0.0732435, q[2] + np.deg2rad(90-76.111) + np.pi, 0.1, 0)
 
     # T1_B0 = sTrasl(bx,by,bz).dot(sTroty(np.pi/2)).dot(sTrotz(np.pi))
-    T2_B1 = T2_B0.dot(T2_01)
-    T2_B2 = T2_B0.dot(T2_01).dot(T2_12)
-    T2_B3 = T2_B0.dot(T2_01).dot(T2_12).dot(T2_23)
-    # Print
+    T1_B1 = T1_B0.dot(T1_01)
+    T1_B2 = T1_B0.dot(T1_01).dot(T1_12)
+    T1_B3 = T1_B0.dot(T1_01).dot(T1_12).dot(T1_23)
+    
     if modo=='pose':
-        quater = rot2quaternion(T2_B3[0:3,0:3])
-        position = T2_B3[0:3,3] 
+        quater = rot2quaternion(T1_B3[0:3,0:3])
+        position = T1_B3[0:3,3] 
         pose = np.hstack((position,quater))
         return pose
     else:
-        return T2_B3
+        return T1_B3
 
 def fk_pata3_pos(q, modo=''):
     # Pata 3
@@ -419,7 +420,7 @@ def jacobian_a_posev2(q, pata, delta=0.0001):
 
 
 # Control de la tarea 
-def control_fkdiff(x,xd,q1,dt,pata,k=1):
+def control_fkdiff(x,xd,q1,dt,pata,k=1.5):
     """
      Función que resuelve la tarea del error para obtener
      la velocidad angular de cada articulación
@@ -429,19 +430,24 @@ def control_fkdiff(x,xd,q1,dt,pata,k=1):
         - q1 (posición actual - espacio articular)
         - k (Ganancia proporicual - Lambda) / Por defecto = 1   
     """
-    ep = xd[0:3] - x[0:3] 
+    ep = xd[0:3] -x[0:3] 
     Qe = error_quaterv2(x[3:7], xd[3:7])
     e0 = np.array([[Qe[0,0]-1],
            [Qe[1,0]],
            [Qe[2,0]],
            [Qe[3,0]]])
     e = np.array([[ep[0]],[ep[1]],[ep[2]],[e0[0,0]],[e0[1,0]],[e0[2,0]],[e0[3,0]]]) 
-   
+    
+    if pata==2:
+        print(e[0:3])
+        print("==================================")
+
     e_dot = k*e
-    J = jacobian_a_posev2(q1,pata)
+    J = jacobian_a_pose(q1,pata)
     try: 
         J_mul = np.linalg.inv(J.T.dot(J)).dot(J.T)
     except np.linalg.LinAlgError:
+        print("Matriz de rango no completo ")
         J_mul = (J.transpose()).dot(np.linalg.inv(J.dot(J.transpose()) + k*np.eye(3)))
     
     q_dot = J_mul.dot(e_dot)
