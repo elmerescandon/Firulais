@@ -10,7 +10,7 @@ from pyquaternion import Quaternion
 
 
 q = np.deg2rad(np.array([30,30,30]))
-Ts = fk_pata1(q)
+Ts = fk_pata4(q)
 T1_B0 = Ts[0]
 T1_B1 = Ts[1]
 T1_B2 = Ts[2]

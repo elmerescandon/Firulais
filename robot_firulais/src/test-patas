@@ -14,9 +14,9 @@ jnames = ["abductor3_joint", "muslo3_joint", "tobillo3_joint",
           "abductor2_joint", "muslo2_joint", "tobillo2_joint"]
 
 # Inicializar vector
-q0 = np.deg2rad(np.array([30,0,0,
-			   			  30,30,30,
+q0 = np.deg2rad(np.array([30,30,30,
 			   			  0,0,0,
+			   			  30,30,30,
 			   			  0,0,0]))
 
 # Pata 1: Superior Izquierda (q1)
@@ -35,7 +35,7 @@ q4 = q0[6:9]
 bmarker1 = BallMarker(color['RED'])
 # bmarker2 = BallMarker(color['BLUE'])
 # bmarker3 = BallMarker(color['GREEN'])
-# bmarker4 = BallMarker(color['YELLOW'])
+bmarker4 = BallMarker(color['YELLOW'])
 
 # Creación de nodo
 rospy.init_node('joints_test')
@@ -70,13 +70,13 @@ while not rospy.is_shutdown():
 	q4 = q0[6:9]
 
 	xfl = fk_pata1_pos(q1)
-	# xrl = fk_pata2_pos(q2)
+	xrl = fk_pata2_pos(q2)
 	# xfr = fk_pata3_pos(q3)
 	# xrr = fk_pata4_pos(q4)
 	print(np.round(xfl,2))
 	bmarker1.position(xfl)
 	# bmarker2.position(xfr)
 	# bmarker3.position(xrr)
-	# bmarker4.position(xrl)
+	bmarker4.position(xrl)
 
 	rate.sleep()
