@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from copy import copy
+from pyquaternion import Quaternion
 
 # ==================================
 #  Funciones Numéricas Primarias
 # ==================================
+
 
 
 def sdh(d, th, a, alpha):
@@ -29,11 +31,17 @@ def rot2quaternion(R):
     Lo de vuelve de la forma:
     q = (w,ex,ey,ez)
     """
-    omega = ((1+R[0, 0]+R[1, 1]+R[2, 2])**0.5)*0.5
-    ex = (1/(4*omega))*(R[2, 1]-R[1, 2])
-    ey = (1/(4*omega))*(R[0, 2]-R[2, 0])
-    ez = (1/(4*omega))*(R[1, 0]-R[0, 1])
-    q = np.array([omega,ex,ey,ez])
+    # omega = ((1+R[0, 0]+R[1, 1]+R[2, 2])**0.5)*0.5
+    # ex = (1/(4*omega))*(R[2, 1]-R[1, 2])
+    # ey = (1/(4*omega))*(R[0, 2]-R[2, 0])
+    # ez = (1/(4*omega))*(R[1, 0]-R[0, 1])
+    # trace = R[0, 0]+R[1, 1]+R[2, 2]
+    # omega  = np.sqrt((trace+1)/4)
+    # ex = np.sqrt(R[0,0]*0.5 + (1-trace)/4)
+    # ey = np.sqrt(R[1,1]*0.5 + (1-trace)/4)
+    # ez = np.sqrt(R[2,2]*0.5 + (1-trace)/4)
+    q = Quaternion(matrix=R)
+    # q = np.array([omega,ex,ey,ez])
     return q
 
 def sTrasl(x, y, z):
@@ -67,7 +75,7 @@ def sTroty(ang):
 def sTrotz(ang):
     """ Matriz de transformada homogenea alrededor de Z
     """
-    Tz = np.Matrix([[np.cos(ang),-np.sin(ang),0,0],
+    Tz = np.array([[np.cos(ang),-np.sin(ang),0,0],
                     [np.sin(ang), np.cos(ang),0,0],
                     [0,0,1,0],
                     [0,0,0,1]])
@@ -124,15 +132,18 @@ def error_quaterv2(qact, qd):
 
 def fk_pata1_pos(q, modo=''):
     # Pata 1
-    l1 = 0.125;l2=0.025;l3=0.105;l4=0.104;d1=0.075
-    #l1 = 125;l2 = 25;l3 = 103;l4 = 104;d1 = 75
-    q11 = q[0];q12 = q[1];q13 = q[2];
-    T1_01 = sdh(l1, q11, 0, np.pi/2)
-    T1_12 = sdh(l2, q12, -l3, 0)
-    T1_23 = sdh(0, q13, -l4, 0)
-    T1_03 = T1_01.dot(T1_12).dot(T1_23)
-    T1_B0 = sTroty(-np.pi/2).dot(sTrotx(np.pi)).dot(sTrasl(0,-d1,0))
-    T1_B3 = T1_B0.dot(T1_03)
+    dx = 0.116940
+    dy = 0.055642
+    dz = 0.012717
+    T1_B0 = sTrasl(dx, dy, dz).dot(sTroty(np.pi / 2)).dot(sTrotz(np.pi / 2))
+    T1_01 = sdh(0, q[0] + np.pi / 2, -0.01, np.pi / 2)
+    T1_12 = sdh(0, q[1] - np.deg2rad(90-76.111)+np.pi, 0.105627, 0)
+    T1_23 = sdh(0.0732435, q[2] + np.deg2rad(90-76.111) + np.pi, 0.1, 0)
+
+    # T1_B0 = sTrasl(bx,by,bz).dot(sTroty(np.pi/2)).dot(sTrotz(np.pi))
+    T1_B1 = T1_B0.dot(T1_01)
+    T1_B2 = T1_B0.dot(T1_01).dot(T1_12)
+    T1_B3 = T1_B0.dot(T1_01).dot(T1_12).dot(T1_23)
     if modo == 'pose':
         quater = rot2quaternion(T1_B3[0:3,0:3])
         position = T1_B3[0:3,3] 
@@ -144,14 +155,17 @@ def fk_pata1_pos(q, modo=''):
 
 def fk_pata2_pos(q, modo=''):
     # Pata 2
-    l1 = 0.125;l2=0.025;l3=0.105;l4=0.104;d1=0.075
+    l1  =0.028;l2=0.010;l3=0.025;l4 = 0.09243;l5=0.0925;l6=0.0925
     #l1 = 125;l2 = 25;l3 = 103;l4 = 104;d1 = 75
     q21 = q[0];q22 = q[1];q23 = q[2];
-    T2_01 = sdh(l1, np.pi+q21, 0, np.pi/2)
-    T2_12 = sdh(l2, q22, l3, 0)
-    T2_23 = sdh(0, q23, l4, 0)
+    bx = -0.14494;by = 0.055642;bz = -0.012717
+
+    T2_01 = sdh(-l1, q21,l2, np.pi/2)
+    T2_12 = sdh(0, q22+np.pi/2 + 74.66, np.sqrt(l3**2 + l4**2), 0)
+    T2_23 = sdh(l5, q23+15.34, l6, 0)
+
     T2_03 = (T2_01.dot(T2_12)).dot(T2_23)
-    T2_B0 = sTroty(-np.pi/2).dot(sTrasl(0,d1,0))
+    T2_B0 = sTrasl(bx,by,bz).dot(sTroty(np.pi/2)).dot(sTrotz(np.pi))
     T2_B3 = T2_B0.dot(T2_03)
     # Print
     if modo=='pose':
@@ -164,14 +178,16 @@ def fk_pata2_pos(q, modo=''):
 
 def fk_pata3_pos(q, modo=''):
     # Pata 3
-    l1 = 0.125;l2=0.025;l3=0.105;l4=0.104;d1=0.075
+    l1  =0.028;l2=0.010;l3=0.025;l4 = 0.09243;l5=0.0925;l6=0.0925
     #l1 = 125;l2 = 25;l3 = 103;l4 = 104;d1 = 75
     q31 = q[0];q32 = q[1];q33 = q[2];
-    T3_01 = sdh(l1, np.pi+q31, 0, np.pi/2)
-    T3_12 = sdh(l2, q32, l3, 0)
-    T3_23 = sdh(0, q33, l4, 0)
+    bx = 0.14494;by = -0.055642;bz = -0.012717
+    T3_01 = sdh(-l1, np.pi+q31, -l2, np.pi/2)
+    T3_12 = sdh(0, q32-15.34, np.sqrt(l3**2 + l4**2), 0)
+    T3_23 = sdh(l5, q33-15.34, l6, 0)
+
     T3_03 = T3_01.dot(T3_12).dot(T3_23)
-    T3_B0 = sTroty(-np.pi/2).dot(sTrotx(np.pi)).dot(sTrasl(0,d1,0))
+    T3_B0 = sTroty(np.pi/2).dot(sTrotx(np.pi)).dot(sTrasl(bx,by,bz))
     T3_B3 = T3_B0.dot(T3_03)
     if modo == 'pose':
         quater = rot2quaternion(T3_B3[0:3,0:3])
@@ -184,13 +200,16 @@ def fk_pata3_pos(q, modo=''):
 
 def fk_pata4_pos(q, modo=''):
     # Pata 4
-    l1 = 0.125;l2=0.025;l3=0.105;l4=0.104;d1=0.075	
+    # l1 = 0.125;l2=0.025;l3=0.105;l4=0.104;d1=0.075
+    l1  =0.028;l2=0.010;l3=0.025;l4 = 0.09243;l5=0.0925;l6=0.0925
     q41 = q[0];q42 = q[1];q43 = q[2];
-    T4_01 = sdh(l1, q41, 0, np.pi/2)
-    T4_12 = sdh(l2, q42, -l3, 0)
-    T4_23 = sdh(0, q43, -l4, 0)
+    bx = -0.14494;by = -0.055642;bz = -0.012717
+    
+    T4_01 = sdh(-l1, q41, l2, np.pi/2)
+    T4_12 = sdh(0, q42+15.34, np.sqrt(l3**2), 0)
+    T4_23 = sdh(l5, q43-15.34 , l6, 0)
     T4_03 = T4_01.dot(T4_12).dot(T4_23)
-    T4_B0 = sTroty(-np.pi/2).dot(sTrasl(0,-d1,0))
+    T4_B0 = sTroty(-np.pi/2).dot(sTrasl(bx,by,bz))
     T4_B3 = T4_B0.dot(T4_03)
     if modo == 'pose':
         quater = rot2quaternion(T4_B3[0:3,0:3])
@@ -216,69 +235,72 @@ def fk_pata_pos(q,pata,modo=''):
 # Cinemática directa de cada pata de cada transformación
 
 def fk_pata1(q):
-	# Pata 1
-	l1 = 0.125;l2=0.025;l3=0.105;l4=0.104;d1=0.075
-	#l1 = 125;l2 = 25;l3 = 103;l4 = 104;d1 = 75
-	q11 = q[0];q12 = q[1];q13 = q[2];
-	T1_01 = sdh(l1, q11, 0, np.pi/2)
-	T1_12 = sdh(l2, q12, -l3, 0)
-	T1_23 = sdh(0, q13, -l4, 0)
-	T1_03 = T1_01.dot(T1_12).dot(T1_23)
-	T1_B0 = sTroty(-np.pi/2).dot(sTrotx(np.pi)).dot(sTrasl(0,-d1,0))
-	T1_B1 = T1_B0.dot(T1_01)
-	T1_B2 = T1_B0.dot(T1_01).dot(T1_12)
-	T1_B3 = T1_B0.dot(T1_03)
-	T = [T1_B0,T1_B1,T1_B2,T1_B3]
-	return T
+    dx = 0.116940
+    dy = 0.055642
+    dz = 0.012717
+    T1_B0 = sTrasl(dx, dy, dz).dot(sTroty(np.pi / 2)).dot(sTrotz(np.pi / 2))
+    T1_01 = sdh(0, q[0]+np.pi/2, -0.01, np.pi / 2)
+    T1_12 = sdh(0, q[1] - np.deg2rad(90-76.111), -0.105627, 0)
+    T1_23 = sdh(0.0732435, q[2] + np.deg2rad(90-76.111) + np.pi, 0.1, 0)
+
+    # T1_B0 = sTrasl(bx,by,bz).dot(sTroty(np.pi/2)).dot(sTrotz(np.pi))
+    T1_B1 = T1_B0.dot(T1_01)
+    T1_B2 = T1_B0.dot(T1_01).dot(T1_12)
+    T1_B3 = T1_B0.dot(T1_01).dot(T1_12).dot(T1_23)
+
+
+    T = [T1_B0,T1_01,T1_12,T1_23]
+    return T
 
 
 def fk_pata2(q):
 	# Pata 2
-	l1 = 0.125;l2=0.025;l3=0.105;l4=0.104;d1=0.075
-	#l1 = 125;l2 = 25;l3 = 103;l4 = 104;d1 = 75
-	q21 = q[0];q22 = q[1];q23 = q[2];
-	T2_01 = sdh(l1, np.pi+q21, 0, np.pi/2)
-	T2_12 = sdh(l2, q22, l3, 0)
-	T2_23 = sdh(0, q23, l4, 0)
-	T2_03 = (T2_01.dot(T2_12)).dot(T2_23)
-	T2_B0 = sTroty(-np.pi/2).dot(sTrasl(0,d1,0))
-	T2_B1 = T2_B0.dot(T2_01)
-	T2_B2 = T2_B0.dot(T2_01).dot(T2_12)
-	T2_B3 = T2_B0.dot(T2_03)
-	T = [T2_B1,T2_B2,T2_B3]
-	return T
+    l1  =0.028;l2=0.010;l3=0.025;l4 = 0.09243;l5=0.0925;l6=0.0925
+    #l1 = 125;l2 = 25;l3 = 103;l4 = 104;d1 = 75
+    q21 = q[0];q22 = q[1];q23 = q[2];
+    bx = -0.14494;by = 0.055642;bz = 0.012717
+
+    T2_01 = sdh(-l1, q21,l2, np.pi/2)
+    T2_12 = sdh(0, q22+np.pi/2 + 74.66, np.sqrt(l3**2 + l4**2), 0)
+    T2_23 = sdh(l5, q23+15.34, l6, 0)
+
+    T2_03 = (T2_01.dot(T2_12)).dot(T2_23)
+    T2_B0 = sTroty(-np.pi/2).dot(sTrasl(0,d1,0))
+    T2_B3 = T2_B0.dot(T2_03)
+    T = [T2_B1,T2_B2,T2_B3]
+    return T
 
 def fk_pata3(q):
 	# Pata 3
-	l1 = 0.125;l2=0.025;l3=0.105;l4=0.104;d1=0.075
-	#l1 = 125;l2 = 25;l3 = 103;l4 = 104;d1 = 75
-	q31 = q[0];q32 = q[1];q33 = q[2];
-	T3_01 = sdh(l1, np.pi+q31, 0, np.pi/2)
-	T3_12 = sdh(l2, q32, l3, 0)
-	T3_23 = sdh(0, q33, l4, 0)
-	T3_03 = T3_01.dot(T3_12).dot(T3_23)
-	T3_B0 = sTroty(-np.pi/2).dot(sTrotx(np.pi)).dot(sTrasl(0,d1,0))
-	T3_B1 = T3_B0.dot(T3_01)
-	T3_B2 = T3_B0.dot(T3_01).dot(T3_12)
-	T3_B3 = T3_B0.dot(T3_03)
-	T = [T3_B1,T3_B2,T3_B3]	
-	return T 
+    l1  =0.028;l2=0.010;l3=0.025;l4 = 0.09243;l5=0.0925;l6=0.0925
+    #l1 = 125;l2 = 25;l3 = 103;l4 = 104;d1 = 75
+    q31 = q[0];q32 = q[1];q33 = q[2];
+    bx = 0.14494;by = -0.055642;bz = -0.012717
+    T3_01 = sdh(-l1, np.pi+q31, -l2, np.pi/2)
+    T3_12 = sdh(0, q32-15.34, np.sqrt(l3**2 + l4**2), 0)
+    T3_23 = sdh(l5, q33-15.34, l6, 0)
+
+    T3_03 = T3_01.dot(T3_12).dot(T3_23)
+    T3_B0 = sTroty(-np.pi/2).dot(sTrotx(np.pi)).dot(sTrasl(bx,by,bz))
+    T3_B3 = T3_B0.dot(T3_03)
+    T = [T3_B1,T3_B2,T3_B3]	
+    return T 
 
 
 def fk_pata4(q):
 	# Pata 4
-	l1 = 0.125;l2=0.025;l3=0.105;l4=0.104;d1=0.075	
-	q41 = q[0];q42 = q[1];q43 = q[2];
-	T4_01 = sdh(l1, q41, 0, np.pi/2)
-	T4_12 = sdh(l2, q42, -l3, 0)
-	T4_23 = sdh(0, q43, -l4, 0)
-	T4_03 = T4_01.dot(T4_12).dot(T4_23)
-	T4_B0 = sTroty(-np.pi/2).dot(sTrasl(0,-d1,0))
-	T4_B1 = T4_B0.dot(T4_01)
-	T4_B2 = T4_B0.dot(T4_01).dot(T4_12)
-	T4_B3 = T4_B0.dot(T4_03)
-	T = [T4_B1,T4_B2,T4_B3]
-	return T
+    l1  =0.028;l2=0.010;l3=0.025;l4 = 0.09243;l5=0.0925;l6=0.0925
+    q41 = q[0];q42 = q[1];q43 = q[2];
+    bx = -0.14494;by = -0.055642;bz = -0.012717
+    
+    T4_01 = sdh(-l1, q41, l2, np.pi/2)
+    T4_12 = sdh(0, q42+15.34, sqrt(l3**2), 0)
+    T4_23 = sdh(l5, q43-15.34 , l6, 0)
+    T4_03 = T4_01.dot(T4_12).dot(T4_23)
+    T4_B0 = sTroty(-np.pi/2).dot(sTrasl(bx,by,bz))
+    T4_B3 = T4_B0.dot(T4_03)
+    T = [T4_B1,T4_B2,T4_B3]
+    return T
 
 
 

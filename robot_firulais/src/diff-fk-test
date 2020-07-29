@@ -8,27 +8,27 @@ from funciones import *
 from markers import *
 
 # Joint names
-jnames = ["front_right_j1", "front_right_j2", "front_right_j3",
-          "front_left_j1", "front_left_j2", "front_left_j3",
-          "rear_right_j1", "rear_right_j2", "rear_right_j3",
-          "rear_left_j1", "rear_left_j2", "rear_left_j3"]
+jnames = ["abductor3_joint", "muslo3_joint", "tobillo3_joint",
+          "abductor1_joint", "muslo1_joint", "tobillo1_joint",
+          "abductor4_joint", "muslo4_joint", "tobillo4_joint",
+          "abductor2_joint", "muslo2_joint", "tobillo2_joint"]
 
 # Posición deseada
 pata =  1
-qd = np.deg2rad(np.array([-30,0,0,
-						  30,0,0,
-						  30,0,0,
-						  -30,0,0]))
+qd = np.deg2rad(np.array([0,0,0,
+						  0,0,0,
+						  0,0,0,
+						  0,0,0]))
 
 xd,Td = update_initial_state(qd)
 xd1 = xd[0]; xd2 = xd[1]; xd3 = xd[2]; xd4 = xd[3]
 
 
 # Inicializar vector
-q0 = np.deg2rad(np.array([0,0,0,
-			   			  0,0,0,
-			   			  0,0,0,
-			   			  0,0,0]))
+q0 = np.deg2rad(np.array([30,0,0,
+			   			  0,30,0,
+			   			  0,30,0,
+			   			  0,0,-30]))
 
 # Pata 1: Superior Izquierda (q1) y posición actual
 q1 = q0[3:6]

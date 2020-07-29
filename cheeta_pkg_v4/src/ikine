@@ -1,0 +1,57 @@
+#!/usr/bin/env python
+
+import rospy
+from sensor_msgs.msg import JointState
+
+from markers import *
+from Cheetah_Funciones import *
+
+rospy.init_node("testForwardKinematics")
+pub = rospy.Publisher('joint_states', JointState, queue_size=1000)
+
+bmarker1 = BallMarker(color['GREEN'])
+bmarker2 = BallMarker(color['GREEN'])
+bmarker3 = BallMarker(color['GREEN'])
+bmarker4 = BallMarker(color['GREEN'])
+
+
+# Joint names
+jnames = ['abductor1_joint', 'muslo1_joint', 'tobillo1_joint', 'abductor2_joint', 'muslo2_joint', 'tobillo2_joint', 'abductor3_joint', 'muslo3_joint', 'tobillo3_joint', 'abductor4_joint', 'muslo4_joint', 'tobillo4_joint']
+# Joint Configuration
+q = np.array([0, 2.4, 0.9, 0.8, 0, 0, 0, 2.4, 0.9, 0.8, 0, 0])
+
+# End effector with respect to the base
+T1, T2, T3, T4 = fkine_cheetah(q)
+
+print( np.round(T1, 3) )
+print( np.round(T2, 3) )
+print( np.round(T3, 3) )
+print( np.round(T4, 3) )
+
+bmarker1.position(T1)
+bmarker2.position(T2)
+bmarker3.position(T3)
+bmarker4.position(T4)
+
+# Object (message) whose type is JointState
+jstate = JointState()
+# Set values to the message
+jstate.header.stamp = rospy.Time.now()
+jstate.name = jnames
+# Add the head joint value (with value 0) to the joints
+jstate.position = q
+
+# Loop rate (in Hz)
+rate = rospy.Rate(100)
+# Continuous execution loop
+while not rospy.is_shutdown():
+    # Current time (needed for ROS)
+    jstate.header.stamp = rospy.Time.now()
+    # Publish the message
+    pub.publish(jstate)
+    bmarker1.publish()
+    bmarker2.publish()
+    bmarker3.publish()
+    bmarker4.publish()
+    # Wait for the next iteration
+    rate.sleep()
